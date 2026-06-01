@@ -2,6 +2,8 @@ const state = {
   payload: null,
   radarAngle: 0,
   ws: null,
+  mapKey: "",
+  mapMeta: null,
 };
 
 const els = {
@@ -10,26 +12,24 @@ const els = {
   lastUpdate: document.querySelector("#lastUpdate"),
   dashboardTitle: document.querySelector("#dashboardTitle"),
   homeName: document.querySelector("#homeName"),
-  tar1090Link: document.querySelector("#tar1090Link"),
   liveMode: document.querySelector("#liveMode"),
   countdownMode: document.querySelector("#countdownMode"),
   revealMode: document.querySelector("#revealMode"),
   radarCanvas: document.querySelector("#radarCanvas"),
-  closestTitle: document.querySelector("#closestTitle"),
-  rangeLabel: document.querySelector("#rangeLabel"),
-  liveCount: document.querySelector("#liveCount"),
+  mapView: document.querySelector("#mapView"),
+  mapTiles: document.querySelector("#mapTiles"),
+  mapZoomLabel: document.querySelector("#mapZoomLabel"),
   closestDistance: document.querySelector("#closestDistance"),
-  statFlyovers: document.querySelector("#statFlyovers"),
-  statNew: document.querySelector("#statNew"),
-  statRepeat: document.querySelector("#statRepeat"),
-  statLowest: document.querySelector("#statLowest"),
+  statTotalAircraft: document.querySelector("#statTotalAircraft"),
+  statCurrentAircraft: document.querySelector("#statCurrentAircraft"),
+  statTotalFlyovers: document.querySelector("#statTotalFlyovers"),
+  statTodayFlyovers: document.querySelector("#statTodayFlyovers"),
+  statLowestFlyover: document.querySelector("#statLowestFlyover"),
+  statMaxDistance: document.querySelector("#statMaxDistance"),
   closestCallsign: document.querySelector("#closestCallsign"),
   closestAltitude: document.querySelector("#closestAltitude"),
   closestSpeed: document.querySelector("#closestSpeed"),
   closestHeading: document.querySelector("#closestHeading"),
-  activeCount: document.querySelector("#activeCount"),
-  nearbyList: document.querySelector("#nearbyList"),
-  recentEvents: document.querySelector("#recentEvents"),
   countdownNumber: document.querySelector("#countdownNumber"),
   countdownCallsign: document.querySelector("#countdownCallsign"),
   countdownDirection: document.querySelector("#countdownDirection"),
@@ -95,13 +95,12 @@ function render(payload) {
   const config = payload.config || {};
   const status = payload.status || {};
   const stats = payload.stats_today || {};
+  const summary = payload.stats_total || {};
   const closest = payload.closest_aircraft;
 
   document.title = config.dashboard_title || "SkyLedger";
   els.dashboardTitle.textContent = config.dashboard_title || "SkyLedger";
   els.homeName.textContent = config.home_name || "Gazebo Flight Command Center";
-  els.tar1090Link.href = config.tar1090_url || "http://localhost/tar1090/";
-  els.rangeLabel.textContent = `${Number(config.guess_trigger_radius_miles || 3).toFixed(1)} mi`;
 
   const online = Boolean(status.receiver_online);
   els.receiverStatus.textContent = online ? "Receiver online" : "Receiver offline";
@@ -109,41 +108,26 @@ function render(payload) {
   els.lastUpdate.textContent = status.last_poll_at ? `Updated ${new Date(status.last_poll_at).toLocaleTimeString()}` : "Waiting for data";
 
   setMode(payload.mode);
-  renderLive(payload, stats, closest);
+  renderLive(payload, stats, summary, closest);
+  renderMap(payload);
   if (payload.mode === "countdown") renderCountdown(payload.focus || {});
   if (payload.mode === "reveal") renderReveal(payload.focus || {});
 }
 
-function renderLive(payload, stats, closest) {
+function renderLive(payload, stats, summary, closest) {
   const live = payload.live_aircraft || [];
-  els.liveCount.textContent = live.length;
+  const currentMapped = live.filter((ac) => Number.isFinite(Number(ac.lat)) && Number.isFinite(Number(ac.lon))).length;
   els.closestDistance.textContent = closest ? fmtDistance(closest.distance_mi) : "--";
-  els.closestTitle.textContent = closest ? label(closest) : "Scanning";
-  els.statFlyovers.textContent = fmtNumber(stats.total_flyovers || 0);
-  els.statNew.textContent = fmtNumber(stats.new_aircraft || 0);
-  els.statRepeat.textContent = fmtNumber(stats.repeat_aircraft || 0);
-  els.statLowest.textContent = fmtAltitude(stats.lowest_altitude_ft);
+  els.statTotalAircraft.textContent = fmtNumber(summary.total_aircraft || 0);
+  els.statCurrentAircraft.textContent = fmtNumber(currentMapped);
+  els.statTotalFlyovers.textContent = fmtNumber(summary.total_flyovers || 0);
+  els.statTodayFlyovers.textContent = fmtNumber(stats.total_flyovers || 0);
+  els.statLowestFlyover.textContent = fmtAltitude(summary.lowest_flyover_ft);
+  els.statMaxDistance.textContent = fmtDistance(summary.max_distance_mi);
   els.closestCallsign.textContent = closest ? label(closest) : "No aircraft nearby";
   els.closestAltitude.textContent = closest ? fmtAltitude(closest.altitude_ft) : "--";
   els.closestSpeed.textContent = closest ? fmtSpeed(closest.speed_kt) : "--";
   els.closestHeading.textContent = closest ? fmtHeading(closest.heading) : "--";
-  els.activeCount.textContent = `${payload.active_count || 0} active`;
-
-  els.nearbyList.innerHTML = live.slice(0, 8).map((ac) => `
-    <a class="aircraft-item" href="/aircraft/${encodeURIComponent(ac.hex)}">
-      <strong>${escapeHtml(label(ac))}</strong>
-      <span>${fmtDistance(ac.distance_mi)}</span>
-      <span>${fmtAltitude(ac.altitude_ft)}</span>
-      <span>${fmtSpeed(ac.speed_kt)}</span>
-    </a>
-  `).join("") || `<div class="event-item"><strong>No aircraft in range</strong><span>Standing by</span></div>`;
-
-  els.recentEvents.innerHTML = (payload.recent_events || []).slice(0, 5).map((event) => `
-    <a class="event-item" href="/aircraft/${encodeURIComponent(event.hex)}">
-      <strong>${escapeHtml(event.callsign || event.hex)}</strong>
-      <span>${fmtAltitude(event.altitude_ft)} at ${fmtDistance(event.distance_mi)}</span>
-    </a>
-  `).join("") || `<div class="event-item"><strong>No flyovers logged</strong><span>History will appear here</span></div>`;
 }
 
 function renderCountdown(focus) {
@@ -187,11 +171,11 @@ function drawRadar() {
 
   const cx = width / 2;
   const cy = height / 2;
-  const radius = Math.min(width, height) * 0.44;
+  const radius = overlayRadarRadius(width / scale, height / scale) * scale;
   ctx.clearRect(0, 0, width, height);
   ctx.lineWidth = 1 * scale;
-  ctx.strokeStyle = "rgba(110, 231, 255, 0.2)";
-  ctx.fillStyle = "rgba(97, 244, 168, 0.05)";
+  ctx.strokeStyle = "rgba(110, 231, 255, 0.34)";
+  ctx.fillStyle = "rgba(97, 244, 168, 0.08)";
 
   for (let ring = 1; ring <= 4; ring += 1) {
     ctx.beginPath();
@@ -224,24 +208,165 @@ function drawRadar() {
   ctx.arc(cx, cy, 5 * scale, 0, Math.PI * 2);
   ctx.fill();
 
-  const aircraft = state.payload?.live_aircraft || [];
-  const maxRange = Number(state.payload?.config?.guess_trigger_radius_miles || 3);
-  for (const ac of aircraft) {
-    if (ac.distance_mi === null || ac.distance_mi === undefined) continue;
-    const dist = Math.min(ac.distance_mi / maxRange, 1);
-    const angle = ((ac.heading ?? 0) - 90) * (Math.PI / 180);
-    const x = cx + Math.cos(angle) * radius * dist;
-    const y = cy + Math.sin(angle) * radius * dist;
-    ctx.fillStyle = ac.altitude_ft !== null && ac.altitude_ft <= 10000 ? "#61f4a8" : "#6ee7ff";
-    ctx.beginPath();
-    ctx.arc(x, y, 6 * scale, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "rgba(245, 248, 251, 0.9)";
-    ctx.font = `${12 * scale}px system-ui, sans-serif`;
-    ctx.fillText(label(ac), x + 10 * scale, y - 10 * scale);
+  drawMapOverlay(ctx, scale, width / scale, height / scale);
+  requestAnimationFrame(drawRadar);
+}
+
+function renderMap(payload) {
+  const config = payload.config || {};
+  const homeLat = Number(config.home_lat);
+  const homeLon = Number(config.home_lon);
+  const zoom = clamp(Math.round(Number(config.map_zoom_level ?? 13)), 0, 19);
+  const tileTemplate = config.map_tile_url || "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+  const rect = els.mapView?.getBoundingClientRect();
+
+  if (!Number.isFinite(homeLat) || !Number.isFinite(homeLon) || !rect || rect.width < 20 || rect.height < 20) {
+    state.mapMeta = null;
+    return;
   }
 
-  requestAnimationFrame(drawRadar);
+  els.mapZoomLabel.textContent = `Zoom ${zoom}`;
+  const width = Math.round(rect.width);
+  const height = Math.round(rect.height);
+  const center = latLonToWorld(homeLat, homeLon, zoom);
+  state.mapMeta = { homeLat, homeLon, zoom, center, width, height };
+
+  const key = [homeLat.toFixed(6), homeLon.toFixed(6), zoom, width, height, tileTemplate].join("|");
+  if (key === state.mapKey) return;
+  state.mapKey = key;
+
+  const left = center.x - width / 2;
+  const top = center.y - height / 2;
+  const startX = Math.floor(left / 256);
+  const endX = Math.floor((left + width) / 256);
+  const startY = Math.floor(top / 256);
+  const endY = Math.floor((top + height) / 256);
+  const tileCount = 2 ** zoom;
+  const fragments = [];
+
+  for (let tileY = startY; tileY <= endY; tileY += 1) {
+    if (tileY < 0 || tileY >= tileCount) continue;
+    for (let tileX = startX; tileX <= endX; tileX += 1) {
+      const wrappedX = ((tileX % tileCount) + tileCount) % tileCount;
+      const x = Math.round(tileX * 256 - left);
+      const y = Math.round(tileY * 256 - top);
+      const url = tileTemplate
+        .replaceAll("{z}", String(zoom))
+        .replaceAll("{x}", String(wrappedX))
+        .replaceAll("{y}", String(tileY));
+      fragments.push(`<img src="${escapeHtml(url)}" alt="" style="left:${x}px;top:${y}px" loading="lazy" referrerpolicy="no-referrer" onerror="this.classList.add('tile-error')">`);
+    }
+  }
+
+  els.mapTiles.innerHTML = fragments.join("");
+}
+
+function drawMapOverlay(ctx, scale, cssWidth, cssHeight) {
+  if (!state.mapMeta) return;
+
+  ctx.save();
+  ctx.scale(scale, scale);
+
+  const homeX = cssWidth / 2;
+  const homeY = cssHeight / 2;
+  drawMapRange(ctx, homeX, homeY, state.mapMeta);
+
+  for (const ac of state.payload?.live_aircraft || []) {
+    if (!Number.isFinite(Number(ac.lat)) || !Number.isFinite(Number(ac.lon))) continue;
+    const point = mapPoint(ac.lat, ac.lon, state.mapMeta, cssWidth, cssHeight);
+    if (!point || point.x < -40 || point.x > cssWidth + 40 || point.y < -40 || point.y > cssHeight + 40) continue;
+    drawAircraftMarker(ctx, point.x, point.y, ac);
+  }
+
+  ctx.restore();
+}
+
+function overlayRadarRadius(width, height) {
+  if (!state.mapMeta) {
+    return Math.min(width, height) * 0.46;
+  }
+
+  const trackingRadius = Number(state.payload?.config?.tracking_radius_miles);
+  if (!Number.isFinite(trackingRadius) || trackingRadius <= 0) {
+    return Math.min(width, height) * 0.48;
+  }
+
+  const geographicRadius = mapRadiusPixels(trackingRadius, state.mapMeta);
+  const minimumRadius = Math.min(width, height) * 0.42;
+  const maximumRadius = Math.max(width, height);
+  return Math.max(minimumRadius, Math.min(geographicRadius, maximumRadius));
+}
+
+function drawMapRange(ctx, homeX, homeY, meta) {
+  const config = state.payload?.config || {};
+  const ranges = [
+    { miles: Number(config.alert_radius_miles), color: "rgba(255, 200, 87, 0.44)" },
+    { miles: Number(config.guess_trigger_radius_miles), color: "rgba(97, 244, 168, 0.34)" },
+    { miles: Number(config.tracking_radius_miles), color: "rgba(110, 231, 255, 0.22)" },
+  ].filter((range) => Number.isFinite(range.miles) && range.miles > 0);
+
+  for (const range of ranges) {
+    const radius = mapRadiusPixels(range.miles, meta);
+    ctx.beginPath();
+    ctx.arc(homeX, homeY, radius, 0, Math.PI * 2);
+    ctx.strokeStyle = range.color;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+}
+
+function drawAircraftMarker(ctx, x, y, ac) {
+  const heading = Number(ac.heading || 0) * (Math.PI / 180);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(heading);
+  ctx.beginPath();
+  ctx.moveTo(0, -10);
+  ctx.lineTo(7, 8);
+  ctx.lineTo(0, 4);
+  ctx.lineTo(-7, 8);
+  ctx.closePath();
+  ctx.fillStyle = ac.altitude_ft !== null && ac.altitude_ft <= 10000 ? "#61f4a8" : "#6ee7ff";
+  ctx.shadowColor = "rgba(97, 244, 168, 0.5)";
+  ctx.shadowBlur = 10;
+  ctx.fill();
+  ctx.restore();
+
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "rgba(245, 248, 251, 0.92)";
+  ctx.font = "12px system-ui, sans-serif";
+  ctx.fillText(label(ac), x + 10, y - 10);
+}
+
+function mapRadiusPixels(miles, meta) {
+  const latOffset = miles / 69;
+  const target = latLonToWorld(meta.homeLat + latOffset, meta.homeLon, meta.zoom);
+  return Math.abs(target.y - meta.center.y);
+}
+
+function mapPoint(lat, lon, meta, width, height) {
+  const world = latLonToWorld(Number(lat), Number(lon), meta.zoom);
+  const worldWidth = 256 * (2 ** meta.zoom);
+  let dx = world.x - meta.center.x;
+  if (dx > worldWidth / 2) dx -= worldWidth;
+  if (dx < -worldWidth / 2) dx += worldWidth;
+  return {
+    x: width / 2 + dx,
+    y: height / 2 + (world.y - meta.center.y),
+  };
+}
+
+function latLonToWorld(lat, lon, zoom) {
+  const sinLat = Math.sin(clamp(lat, -85.05112878, 85.05112878) * (Math.PI / 180));
+  const scale = 256 * (2 ** zoom);
+  return {
+    x: ((lon + 180) / 360) * scale,
+    y: (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * scale,
+  };
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function escapeHtml(value) {
@@ -275,6 +400,10 @@ async function pollFallback() {
 
 updateClock();
 setInterval(updateClock, 1000);
+window.addEventListener("resize", () => {
+  state.mapKey = "";
+  if (state.payload) renderMap(state.payload);
+});
 connect();
 pollFallback();
 drawRadar();

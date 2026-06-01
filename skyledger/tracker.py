@@ -102,7 +102,10 @@ class SkyLedgerTracker:
         for snapshot in snapshots:
             if snapshot.distance_mi is None:
                 continue
-            if snapshot.distance_mi > self.config.tracking_radius_miles:
+            if (
+                self.config.tracking_radius_miles > 0
+                and snapshot.distance_mi > self.config.tracking_radius_miles
+            ):
                 continue
 
             seen_keys.add(snapshot.key)
@@ -216,7 +219,7 @@ class SkyLedgerTracker:
     def build_payload(self) -> dict[str, Any]:
         mode, focus = self._current_mode()
         today = self.db.get_today_stats()
-        recent = self.db.get_recent_events(limit=8)
+        summary = self.db.get_summary_stats()
         closest = self.live_aircraft[0].to_dict() if self.live_aircraft else None
         payload = {
             "mode": mode,
@@ -224,21 +227,26 @@ class SkyLedgerTracker:
             "status": self.status_payload(),
             "config": {
                 "home_name": self.config.home_name,
+                "home_lat": self.config.home_lat,
+                "home_lon": self.config.home_lon,
                 "dashboard_title": self.config.dashboard_title,
                 "tar1090_url": self.config.tar1090_url,
                 "alert_radius_miles": self.config.alert_radius_miles,
                 "guess_trigger_radius_miles": self.config.guess_trigger_radius_miles,
+                "tracking_radius_miles": self.config.tracking_radius_miles,
                 "max_alert_altitude_ft": self.config.max_alert_altitude_ft,
+                "map_zoom_level": self.config.map_zoom_level,
+                "map_tile_url": self.config.map_tile_url,
             },
             "live_aircraft": [item.to_dict() for item in self.live_aircraft[:40]],
             "closest_aircraft": closest,
             "active_count": len(self.active),
+            "stats_total": summary,
             "stats_today": {
                 **today,
                 "aircraft_count": self.db.count_distinct_aircraft_today(today["date"]),
                 "helicopters": sum(1 for item in self.live_aircraft if item.is_helicopter),
             },
-            "recent_events": recent,
         }
         return payload
 

@@ -82,6 +82,16 @@ CREATE TABLE IF NOT EXISTS raw_positions (
 
 CREATE INDEX IF NOT EXISTS idx_raw_positions_seen_at ON raw_positions(seen_at DESC);
 CREATE INDEX IF NOT EXISTS idx_raw_positions_hex ON raw_positions(hex, seen_at DESC);
+
+CREATE TABLE IF NOT EXISTS received_aircraft (
+    hex TEXT PRIMARY KEY,
+    first_seen TEXT,
+    last_seen TEXT,
+    last_callsign TEXT,
+    total_positions INTEGER DEFAULT 0,
+    max_distance_mi REAL,
+    max_distance_seen_at TEXT
+);
 """
 
 
@@ -119,6 +129,7 @@ class Database:
         return None
 
     def record_raw_positions(self, snapshots: Iterable[AircraftSnapshot], retention_days: int) -> None:
+        snapshot_list = list(snapshots)
         rows = [
             (
                 item.received_at,
@@ -129,25 +140,66 @@ class Database:
                 item.speed_kt,
                 item.heading,
             )
-            for item in snapshots
+            for item in snapshot_list
             if item.has_position
         ]
-        if not rows:
+        received_rows = [
+            (
+                item.hex,
+                item.received_at,
+                item.received_at,
+                item.callsign,
+                1,
+                item.distance_mi,
+                item.received_at if item.distance_mi is not None else None,
+            )
+            for item in snapshot_list
+            if item.hex
+        ]
+        if not rows and not received_rows:
             return
 
         def write() -> None:
             with self.connect() as conn:
-                conn.executemany(
-                    """
-                    INSERT INTO raw_positions (seen_at, hex, lat, lon, altitude_ft, speed_kt, heading)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    rows,
-                )
+                if rows:
+                    conn.executemany(
+                        """
+                        INSERT INTO raw_positions (seen_at, hex, lat, lon, altitude_ft, speed_kt, heading)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        rows,
+                    )
                 conn.execute(
                     "DELETE FROM raw_positions WHERE seen_at < datetime('now', ?)",
                     (f"-{int(retention_days)} days",),
                 )
+                if received_rows:
+                    conn.executemany(
+                        """
+                        INSERT INTO received_aircraft (
+                            hex, first_seen, last_seen, last_callsign,
+                            total_positions, max_distance_mi, max_distance_seen_at
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(hex) DO UPDATE SET
+                            last_seen = excluded.last_seen,
+                            last_callsign = COALESCE(excluded.last_callsign, received_aircraft.last_callsign),
+                            total_positions = received_aircraft.total_positions + 1,
+                            max_distance_mi = CASE
+                                WHEN excluded.max_distance_mi IS NULL THEN received_aircraft.max_distance_mi
+                                WHEN received_aircraft.max_distance_mi IS NULL THEN excluded.max_distance_mi
+                                WHEN excluded.max_distance_mi > received_aircraft.max_distance_mi THEN excluded.max_distance_mi
+                                ELSE received_aircraft.max_distance_mi
+                            END,
+                            max_distance_seen_at = CASE
+                                WHEN excluded.max_distance_mi IS NULL THEN received_aircraft.max_distance_seen_at
+                                WHEN received_aircraft.max_distance_mi IS NULL THEN excluded.max_distance_seen_at
+                                WHEN excluded.max_distance_mi > received_aircraft.max_distance_mi THEN excluded.max_distance_seen_at
+                                ELSE received_aircraft.max_distance_seen_at
+                            END
+                        """,
+                        received_rows,
+                    )
 
         self.execute_with_retry(write)
 
@@ -357,3 +409,38 @@ class Database:
                 (date,),
             ).fetchone()
             return int(row["count"])
+
+    def get_summary_stats(self) -> dict[str, Any]:
+        with self.connect() as conn:
+            row = conn.execute(
+                """
+                SELECT
+                    (SELECT COUNT(*) FROM received_aircraft) AS total_aircraft,
+                    (SELECT COUNT(*) FROM flyover_events) AS total_flyovers,
+                    (SELECT MIN(altitude_ft) FROM flyover_events WHERE altitude_ft IS NOT NULL) AS lowest_flyover_ft,
+                    (SELECT MAX(max_distance_mi) FROM received_aircraft) AS max_distance_mi
+                """
+            ).fetchone()
+            return dict(row)
+
+    def clear_history(self) -> dict[str, int]:
+        def write() -> dict[str, int]:
+            with self.connect() as conn:
+                counts = {
+                    "flyover_events": int(conn.execute("SELECT COUNT(*) FROM flyover_events").fetchone()[0]),
+                    "aircraft": int(conn.execute("SELECT COUNT(*) FROM aircraft").fetchone()[0]),
+                    "daily_stats": int(conn.execute("SELECT COUNT(*) FROM daily_stats").fetchone()[0]),
+                    "raw_positions": int(conn.execute("SELECT COUNT(*) FROM raw_positions").fetchone()[0]),
+                    "received_aircraft": int(conn.execute("SELECT COUNT(*) FROM received_aircraft").fetchone()[0]),
+                }
+                conn.execute("DELETE FROM flyover_events")
+                conn.execute("DELETE FROM aircraft")
+                conn.execute("DELETE FROM daily_stats")
+                conn.execute("DELETE FROM raw_positions")
+                conn.execute("DELETE FROM received_aircraft")
+                conn.execute(
+                    "DELETE FROM sqlite_sequence WHERE name IN ('flyover_events', 'raw_positions')"
+                )
+                return counts
+
+        return self.execute_with_retry(write)

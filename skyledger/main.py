@@ -7,15 +7,20 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 
 from .adsb import ADSBReader
-from .config import load_config
+from .config import load_config, update_config_file
 from .db import Database
 from .discord import DiscordNotifier
 from .tracker import SkyLedgerTracker
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = PACKAGE_DIR / "static"
+
+
+class MapZoomRequest(BaseModel):
+    map_zoom_level: int = Field(ge=0, le=19)
 
 
 class ConnectionManager:
@@ -140,6 +145,28 @@ def create_app(config_path: str | None = None) -> FastAPI:
     @app.post("/api/test-countdown")
     async def api_test_countdown() -> dict[str, Any]:
         return await tracker.trigger_test_countdown()
+
+    @app.post("/api/history/clear")
+    async def api_clear_history() -> dict[str, Any]:
+        tracker.active.clear()
+        tracker.alert_cooldowns.clear()
+        counts = await asyncio.to_thread(db.clear_history)
+        payload = tracker.build_payload()
+        tracker.last_payload = payload
+        await manager.broadcast(payload)
+        return {"ok": True, "deleted": counts}
+
+    @app.post("/api/settings/map-zoom")
+    async def api_update_map_zoom(request: MapZoomRequest) -> dict[str, Any]:
+        updated = await asyncio.to_thread(
+            update_config_file,
+            config_path,
+            {"map_zoom_level": request.map_zoom_level},
+        )
+        config.map_zoom_level = updated.map_zoom_level
+        tracker.last_payload = tracker.build_payload()
+        await manager.broadcast(tracker.last_payload)
+        return {"ok": True, "map_zoom_level": config.map_zoom_level}
 
     return app
 

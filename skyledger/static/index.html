@@ -14,6 +14,7 @@
           <span>
             <strong id="dashboardTitle">SkyLedger</strong>
             <small id="homeName">Gazebo Flight Command Center</small>
+            <small class="mode-label">Live Radar</small>
           </span>
         </a>
         <section class="status-strip" aria-label="System status">
@@ -29,44 +30,56 @@
 
       <section id="liveMode" class="mode-panel live-grid active" aria-label="Live radar">
         <section class="radar-panel">
-          <div class="radar-header">
-            <div>
-              <span class="eyebrow">Live Radar</span>
-              <h1 id="closestTitle">Scanning</h1>
+          <section class="map-panel primary-map-panel" aria-label="Home-centered radar map">
+            <div class="map-header">
+              <span class="eyebrow">Map Radar</span>
+              <span id="mapZoomLabel">Zoom --</span>
             </div>
-            <a id="tar1090Link" href="http://localhost/tar1090/" target="_blank" rel="noreferrer">tar1090</a>
-          </div>
-          <canvas id="radarCanvas" width="960" height="760" aria-label="Local radar display"></canvas>
-          <div class="radar-footer">
-            <span>Range <strong id="rangeLabel">3.0 mi</strong></span>
-            <span>Aircraft <strong id="liveCount">0</strong></span>
-            <span>Closest <strong id="closestDistance">--</strong></span>
-          </div>
+            <div id="mapView" class="map-view">
+              <div id="mapTiles" class="map-tiles"></div>
+              <canvas id="radarCanvas" width="1280" height="760" aria-label="Radar overlay map"></canvas>
+              <div class="map-home-marker" aria-hidden="true"></div>
+              <div class="map-compass" aria-hidden="true">N</div>
+              <div class="map-attribution">OpenStreetMap</div>
+            </div>
+          </section>
         </section>
 
         <aside class="side-stack">
           <section class="stat-grid">
             <article class="metric">
-              <span>Flyovers</span>
-              <strong id="statFlyovers">0</strong>
+              <span>Total Aircraft</span>
+              <strong id="statTotalAircraft">0</strong>
             </article>
             <article class="metric">
-              <span>New</span>
-              <strong id="statNew">0</strong>
+              <span>Current Aircraft</span>
+              <strong id="statCurrentAircraft">0</strong>
             </article>
             <article class="metric">
-              <span>Repeat</span>
-              <strong id="statRepeat">0</strong>
+              <span>Total Flyovers</span>
+              <strong id="statTotalFlyovers">0</strong>
             </article>
             <article class="metric">
-              <span>Lowest</span>
-              <strong id="statLowest">--</strong>
+              <span>Today Flyovers</span>
+              <strong id="statTodayFlyovers">0</strong>
+            </article>
+            <article class="metric">
+              <span>Lowest Flyover</span>
+              <strong id="statLowestFlyover">--</strong>
+            </article>
+            <article class="metric">
+              <span>Max Distance</span>
+              <strong id="statMaxDistance">--</strong>
             </article>
           </section>
 
           <section class="closest-card">
             <span class="eyebrow">Closest Aircraft</span>
             <h2 id="closestCallsign">No aircraft nearby</h2>
+            <div class="data-row">
+              <span>Distance</span>
+              <strong id="closestDistance">--</strong>
+            </div>
             <div class="data-row">
               <span>Altitude</span>
               <strong id="closestAltitude">--</strong>
@@ -81,21 +94,6 @@
             </div>
           </section>
 
-          <section class="list-card">
-            <div class="section-title">
-              <span class="eyebrow">Nearby</span>
-              <strong id="activeCount">0 active</strong>
-            </div>
-            <div id="nearbyList" class="aircraft-list"></div>
-          </section>
-
-          <section class="list-card compact">
-            <div class="section-title">
-              <span class="eyebrow">Recent Flyovers</span>
-              <a href="/history">View all</a>
-            </div>
-            <div id="recentEvents" class="event-list"></div>
-          </section>
         </aside>
       </section>
 

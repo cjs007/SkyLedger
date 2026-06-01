@@ -25,7 +25,7 @@ class AppConfig:
     alert_radius_miles: float = 0.5
     guess_trigger_radius_miles: float = 1.2
     reveal_radius_miles: float = 0.5
-    tracking_radius_miles: float = 3.0
+    tracking_radius_miles: float = 0.0
     max_alert_altitude_ft: int = 10000
     countdown_seconds: int = 10
     reveal_duration_seconds: int = 25
@@ -36,7 +36,9 @@ class AppConfig:
     dashboard_title: str = "SkyLedger"
     database_path: str = "skyledger.db"
     tar1090_url: str = "http://localhost/tar1090/"
-    poll_interval_seconds: float = 2.0
+    poll_interval_seconds: float = 1.0
+    map_zoom_level: int = 13
+    map_tile_url: str = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
 
     def public_dict(self) -> dict[str, Any]:
         data = asdict(self)
@@ -45,7 +47,7 @@ class AppConfig:
 
 
 def load_config(path: str | None = None) -> AppConfig:
-    config_path = _resolve_config_path(path)
+    config_path = resolve_config_path(path)
     raw: dict[str, Any] = {}
     if config_path and config_path.exists():
         with config_path.open("r", encoding="utf-8") as handle:
@@ -68,7 +70,7 @@ def load_config(path: str | None = None) -> AppConfig:
     return AppConfig(**values)
 
 
-def _resolve_config_path(path: str | None) -> Path | None:
+def resolve_config_path(path: str | None = None) -> Path | None:
     explicit = path or os.environ.get("SKYLEDGER_CONFIG")
     if explicit:
         return Path(explicit).expanduser()
@@ -78,6 +80,31 @@ def _resolve_config_path(path: str | None) -> Path | None:
         if resolved.exists():
             return resolved
     return None
+
+
+def update_config_file(path: str | None, updates: dict[str, Any]) -> AppConfig:
+    config_path = resolve_config_path(path) or Path("config.yaml")
+    allowed = {field.name: field for field in fields(AppConfig)}
+    unknown = set(updates) - set(allowed)
+    if unknown:
+        names = ", ".join(sorted(unknown))
+        raise ValueError(f"Unknown config field(s): {names}")
+
+    raw: dict[str, Any] = {}
+    if config_path.exists():
+        with config_path.open("r", encoding="utf-8") as handle:
+            loaded = yaml.safe_load(handle) or {}
+            if not isinstance(loaded, dict):
+                raise ValueError(f"Config file must contain a YAML mapping: {config_path}")
+            raw = loaded
+
+    for key, value in updates.items():
+        raw[key] = _coerce(value, allowed[key].type)
+
+    with config_path.open("w", encoding="utf-8") as handle:
+        yaml.safe_dump(raw, handle, sort_keys=False)
+
+    return load_config(str(config_path))
 
 
 def _coerce(value: Any, annotation: Any) -> Any:
