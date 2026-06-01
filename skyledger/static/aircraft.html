@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SkyLedger Aircraft</title>
+    <link rel="stylesheet" href="/assets/app.css">
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="topbar page-topbar">
+        <a class="brand" href="/">
+          <span class="brand-mark"></span>
+          <span>
+            <strong>SkyLedger</strong>
+            <small>Aircraft Record</small>
+          </span>
+        </a>
+        <nav class="nav-actions">
+          <a href="/">Dashboard</a>
+          <a href="/history">History</a>
+        </nav>
+      </header>
+      <section class="aircraft-profile">
+        <div>
+          <span class="eyebrow">Aircraft</span>
+          <h1 id="aircraftHex">--</h1>
+          <p id="aircraftMeta">Loading aircraft record</p>
+        </div>
+        <div class="profile-stats">
+          <article class="metric">
+            <span>Sightings</span>
+            <strong id="aircraftSightings">0</strong>
+          </article>
+          <article class="metric">
+            <span>Lowest</span>
+            <strong id="aircraftLowest">--</strong>
+          </article>
+          <article class="metric">
+            <span>Closest</span>
+            <strong id="aircraftClosest">--</strong>
+          </article>
+        </div>
+      </section>
+      <section class="table-panel">
+        <table>
+          <thead>
+            <tr>
+              <th>Seen</th>
+              <th>Callsign</th>
+              <th>Altitude</th>
+              <th>Distance</th>
+              <th>Speed</th>
+              <th>Event</th>
+            </tr>
+          </thead>
+          <tbody id="aircraftRows"></tbody>
+        </table>
+      </section>
+    </main>
+    <script src="/assets/aircraft.js"></script>
+  </body>
+</html>

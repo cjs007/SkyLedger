@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SkyLedger</title>
+    <link rel="stylesheet" href="/assets/app.css">
+  </head>
+  <body class="dashboard-page">
+    <main class="screen-shell">
+      <header class="topbar">
+        <a class="brand" href="/">
+          <span class="brand-mark"></span>
+          <span>
+            <strong id="dashboardTitle">SkyLedger</strong>
+            <small id="homeName">Gazebo Flight Command Center</small>
+          </span>
+        </a>
+        <section class="status-strip" aria-label="System status">
+          <span id="clock" class="clock">--:--</span>
+          <span id="receiverStatus" class="status-pill offline">Receiver offline</span>
+          <span id="lastUpdate">Waiting for data</span>
+        </section>
+        <nav class="nav-actions" aria-label="Dashboard pages">
+          <a href="/history">History</a>
+          <a href="/settings">Settings</a>
+        </nav>
+      </header>
+
+      <section id="liveMode" class="mode-panel live-grid active" aria-label="Live radar">
+        <section class="radar-panel">
+          <div class="radar-header">
+            <div>
+              <span class="eyebrow">Live Radar</span>
+              <h1 id="closestTitle">Scanning</h1>
+            </div>
+            <a id="tar1090Link" href="http://localhost/tar1090/" target="_blank" rel="noreferrer">tar1090</a>
+          </div>
+          <canvas id="radarCanvas" width="960" height="760" aria-label="Local radar display"></canvas>
+          <div class="radar-footer">
+            <span>Range <strong id="rangeLabel">3.0 mi</strong></span>
+            <span>Aircraft <strong id="liveCount">0</strong></span>
+            <span>Closest <strong id="closestDistance">--</strong></span>
+          </div>
+        </section>
+
+        <aside class="side-stack">
+          <section class="stat-grid">
+            <article class="metric">
+              <span>Flyovers</span>
+              <strong id="statFlyovers">0</strong>
+            </article>
+            <article class="metric">
+              <span>New</span>
+              <strong id="statNew">0</strong>
+            </article>
+            <article class="metric">
+              <span>Repeat</span>
+              <strong id="statRepeat">0</strong>
+            </article>
+            <article class="metric">
+              <span>Lowest</span>
+              <strong id="statLowest">--</strong>
+            </article>
+          </section>
+
+          <section class="closest-card">
+            <span class="eyebrow">Closest Aircraft</span>
+            <h2 id="closestCallsign">No aircraft nearby</h2>
+            <div class="data-row">
+              <span>Altitude</span>
+              <strong id="closestAltitude">--</strong>
+            </div>
+            <div class="data-row">
+              <span>Speed</span>
+              <strong id="closestSpeed">--</strong>
+            </div>
+            <div class="data-row">
+              <span>Heading</span>
+              <strong id="closestHeading">--</strong>
+            </div>
+          </section>
+
+          <section class="list-card">
+            <div class="section-title">
+              <span class="eyebrow">Nearby</span>
+              <strong id="activeCount">0 active</strong>
+            </div>
+            <div id="nearbyList" class="aircraft-list"></div>
+          </section>
+
+          <section class="list-card compact">
+            <div class="section-title">
+              <span class="eyebrow">Recent Flyovers</span>
+              <a href="/history">View all</a>
+            </div>
+            <div id="recentEvents" class="event-list"></div>
+          </section>
+        </aside>
+      </section>
+
+      <section id="countdownMode" class="mode-panel countdown-stage" aria-label="Altitude guess countdown">
+        <div class="sweep-bg"></div>
+        <span class="eyebrow">Guess The Altitude</span>
+        <div id="countdownNumber" class="countdown-number">10</div>
+        <h1 id="countdownCallsign">Inbound aircraft</h1>
+        <div class="teaser-row">
+          <span id="countdownDirection">Approaching</span>
+          <span id="countdownDistance">-- mi</span>
+          <span id="countdownSpeed">-- kt</span>
+        </div>
+      </section>
+
+      <section id="revealMode" class="mode-panel reveal-stage" aria-label="Aircraft reveal">
+        <div class="reveal-main">
+          <div>
+            <span class="eyebrow">Altitude Reveal</span>
+            <h1 id="revealCallsign">SKY123</h1>
+            <div id="revealAltitude" class="altitude-number">-- ft</div>
+          </div>
+          <div id="revealBadge" class="reveal-badge">Flyover logged</div>
+        </div>
+
+        <section class="reveal-grid">
+          <article class="reveal-data">
+            <span>Distance</span>
+            <strong id="revealDistance">--</strong>
+          </article>
+          <article class="reveal-data">
+            <span>Speed</span>
+            <strong id="revealSpeed">--</strong>
+          </article>
+          <article class="reveal-data">
+            <span>Heading</span>
+            <strong id="revealHeading">--</strong>
+          </article>
+          <article class="reveal-data">
+            <span>Vertical</span>
+            <strong id="revealVertical">--</strong>
+          </article>
+          <article class="reveal-data wide">
+            <span>Aircraft</span>
+            <strong id="revealAircraft">--</strong>
+          </article>
+          <article class="reveal-data wide">
+            <span>History</span>
+            <strong id="revealHistory">--</strong>
+          </article>
+        </section>
+
+        <footer class="reveal-footer">
+          <span id="revealHex">hex --</span>
+          <span id="revealRoute">Route unknown</span>
+          <span id="revealTimer">Returning soon</span>
+        </footer>
+      </section>
+    </main>
+    <script src="/assets/dashboard.js"></script>
+  </body>
+</html>

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SkyLedger Settings</title>
+    <link rel="stylesheet" href="/assets/app.css">
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="topbar page-topbar">
+        <a class="brand" href="/">
+          <span class="brand-mark"></span>
+          <span>
+            <strong>SkyLedger</strong>
+            <small>Settings</small>
+          </span>
+        </a>
+        <nav class="nav-actions">
+          <a href="/">Dashboard</a>
+          <a href="/history">History</a>
+        </nav>
+      </header>
+      <section class="settings-grid">
+        <article class="settings-panel">
+          <span class="eyebrow">Receiver</span>
+          <dl id="statusList"></dl>
+        </article>
+        <article class="settings-panel">
+          <span class="eyebrow">Configuration</span>
+          <dl id="configList"></dl>
+        </article>
+        <article class="settings-panel actions-panel">
+          <span class="eyebrow">Tests</span>
+          <button id="testCountdown" type="button">Test Countdown</button>
+          <button id="testDiscord" type="button">Test Discord</button>
+          <p id="testResult"></p>
+        </article>
+      </section>
+    </main>
+    <script src="/assets/settings.js"></script>
+  </body>
+</html>

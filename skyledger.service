@@ -1,0 +1,17 @@
+[Unit]
+Description=SkyLedger ADS-B dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/opt/skyledger
+Environment=SKYLEDGER_CONFIG=/etc/skyledger/config.yaml
+ExecStart=/opt/skyledger/venv/bin/python -m skyledger --host 0.0.0.0
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

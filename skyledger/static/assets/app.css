@@ -1,0 +1,639 @@
+:root {
+  color-scheme: dark;
+  --bg: #05070a;
+  --panel: #0b1117;
+  --panel-2: #111b22;
+  --line: rgba(135, 230, 255, 0.2);
+  --line-strong: rgba(135, 230, 255, 0.42);
+  --text: #f5f8fb;
+  --muted: #8ea2ad;
+  --cyan: #6ee7ff;
+  --green: #61f4a8;
+  --amber: #ffc857;
+  --red: #ff5c7a;
+  --shadow: 0 22px 60px rgba(0, 0, 0, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background:
+    radial-gradient(circle at 20% 10%, rgba(97, 244, 168, 0.08), transparent 30rem),
+    linear-gradient(135deg, #040609, #091015 46%, #05070a);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.screen-shell {
+  width: min(100vw, 1920px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: clamp(18px, 2vw, 34px);
+}
+
+.topbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto auto;
+  align-items: center;
+  gap: 18px;
+  min-height: 74px;
+  margin-bottom: 18px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.brand-mark {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border: 2px solid var(--cyan);
+  border-radius: 50%;
+  box-shadow: 0 0 28px rgba(110, 231, 255, 0.34), inset 0 0 18px rgba(97, 244, 168, 0.22);
+  position: relative;
+}
+
+.brand-mark::before,
+.brand-mark::after {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 20px;
+  height: 2px;
+  background: var(--green);
+  transform-origin: 0 50%;
+}
+
+.brand-mark::before {
+  transform: rotate(-32deg);
+}
+
+.brand-mark::after {
+  transform: rotate(92deg);
+}
+
+.brand strong {
+  display: block;
+  font-size: clamp(1.5rem, 2.8vw, 3rem);
+  line-height: 1;
+}
+
+.brand small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: clamp(0.78rem, 1vw, 1rem);
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.status-strip,
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: clamp(0.9rem, 1.2vw, 1.15rem);
+}
+
+.clock {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(1.2rem, 1.8vw, 1.75rem);
+  font-weight: 700;
+}
+
+.status-pill,
+.nav-actions a,
+.radar-header a,
+.section-title a {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 13px;
+  background: rgba(11, 17, 23, 0.7);
+}
+
+.status-pill.online {
+  color: var(--green);
+  border-color: rgba(97, 244, 168, 0.55);
+}
+
+.status-pill.offline {
+  color: var(--red);
+  border-color: rgba(255, 92, 122, 0.45);
+}
+
+.mode-panel {
+  display: none;
+}
+
+.mode-panel.active {
+  display: grid;
+}
+
+.live-grid {
+  grid-template-columns: minmax(0, 1.55fr) minmax(360px, 0.85fr);
+  gap: 18px;
+  height: calc(100vh - 176px);
+  min-height: 520px;
+}
+
+.radar-panel,
+.closest-card,
+.list-card,
+.settings-panel,
+.table-panel,
+.aircraft-profile {
+  border: 1px solid var(--line);
+  background: rgba(8, 14, 18, 0.82);
+  box-shadow: var(--shadow);
+}
+
+.radar-panel {
+  min-width: 0;
+  min-height: 0;
+  padding: clamp(18px, 2vw, 28px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  position: relative;
+  overflow: hidden;
+}
+
+.radar-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(110, 231, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(110, 231, 255, 0.06) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(circle at center, black 30%, transparent 76%);
+  pointer-events: none;
+}
+
+.radar-header,
+.radar-footer,
+.section-title,
+.data-row,
+.reveal-footer,
+.teaser-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.radar-header,
+.radar-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.eyebrow {
+  color: var(--cyan);
+  text-transform: uppercase;
+  letter-spacing: 0;
+  font-size: clamp(0.76rem, 1vw, 0.95rem);
+  font-weight: 800;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+.radar-header h1 {
+  margin-top: 4px;
+  font-size: clamp(2rem, 4vw, 5rem);
+  line-height: 1;
+}
+
+#radarCanvas {
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  position: relative;
+  z-index: 1;
+}
+
+.radar-footer {
+  padding-top: 12px;
+  color: var(--muted);
+  font-size: clamp(1rem, 1.4vw, 1.35rem);
+}
+
+.radar-footer strong {
+  color: var(--text);
+}
+
+.side-stack {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) minmax(150px, 0.72fr);
+  gap: 14px;
+}
+
+.stat-grid,
+.profile-stats,
+.reveal-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.stat-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.metric,
+.reveal-data {
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(17, 27, 34, 0.92), rgba(7, 12, 16, 0.92));
+  padding: 15px;
+  min-width: 0;
+}
+
+.metric span,
+.reveal-data span,
+.data-row span {
+  display: block;
+  color: var(--muted);
+  font-size: clamp(0.76rem, 1vw, 0.95rem);
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.metric strong,
+.reveal-data strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--text);
+  font-size: clamp(1.35rem, 2.15vw, 2.45rem);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.closest-card,
+.list-card {
+  padding: 18px;
+  min-width: 0;
+}
+
+.closest-card h2 {
+  margin: 8px 0 16px;
+  font-size: clamp(1.6rem, 2.8vw, 3rem);
+}
+
+.data-row {
+  padding: 12px 0;
+  border-top: 1px solid rgba(135, 230, 255, 0.12);
+}
+
+.data-row strong {
+  font-size: clamp(1.2rem, 1.7vw, 1.75rem);
+}
+
+.aircraft-list,
+.event-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  overflow: auto;
+  max-height: 100%;
+  padding-right: 4px;
+}
+
+.aircraft-item,
+.event-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  border: 1px solid rgba(135, 230, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 12px;
+}
+
+.aircraft-item strong,
+.event-item strong {
+  font-size: clamp(1rem, 1.35vw, 1.35rem);
+  overflow-wrap: anywhere;
+}
+
+.aircraft-item span,
+.event-item span {
+  color: var(--muted);
+  font-size: clamp(0.88rem, 1vw, 1rem);
+}
+
+.countdown-stage,
+.reveal-stage {
+  min-height: calc(100vh - 128px);
+  place-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  background:
+    radial-gradient(circle at center, rgba(97, 244, 168, 0.16), transparent 32rem),
+    rgba(3, 8, 10, 0.92);
+}
+
+.sweep-bg {
+  position: absolute;
+  width: min(88vw, 940px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(110, 231, 255, 0.18);
+  border-radius: 50%;
+  box-shadow: inset 0 0 80px rgba(97, 244, 168, 0.08);
+}
+
+.sweep-bg::after {
+  content: "";
+  position: absolute;
+  inset: 50% 50% auto auto;
+  width: 50%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--green));
+  transform-origin: 100% 50%;
+  animation: sweep 3s linear infinite;
+}
+
+@keyframes sweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.countdown-stage > *:not(.sweep-bg) {
+  position: relative;
+  z-index: 1;
+}
+
+.countdown-number {
+  font-size: clamp(8rem, 26vw, 25rem);
+  line-height: 0.86;
+  font-weight: 900;
+  color: var(--green);
+  text-shadow: 0 0 54px rgba(97, 244, 168, 0.54);
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown-stage h1 {
+  font-size: clamp(2rem, 5vw, 6rem);
+  line-height: 1;
+}
+
+.teaser-row {
+  justify-content: center;
+  margin-top: 22px;
+  font-size: clamp(1.2rem, 2.2vw, 2.6rem);
+  color: var(--muted);
+}
+
+.reveal-stage {
+  padding: clamp(28px, 4vw, 64px);
+  align-content: center;
+  gap: 28px;
+}
+
+.reveal-main {
+  width: min(1300px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 28px;
+  text-align: left;
+}
+
+.reveal-main h1 {
+  font-size: clamp(2.4rem, 7vw, 8rem);
+  line-height: 0.95;
+}
+
+.altitude-number {
+  margin-top: 8px;
+  color: var(--green);
+  font-size: clamp(3.5rem, 10vw, 11rem);
+  line-height: 0.9;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.reveal-badge {
+  max-width: 360px;
+  border: 1px solid rgba(255, 200, 87, 0.6);
+  color: var(--amber);
+  padding: 20px;
+  font-size: clamp(1.2rem, 2vw, 2rem);
+  font-weight: 800;
+  text-align: center;
+}
+
+.reveal-grid {
+  width: min(1300px, 100%);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.reveal-data.wide {
+  grid-column: span 2;
+}
+
+.reveal-footer {
+  width: min(1300px, 100%);
+  color: var(--muted);
+  font-size: clamp(1rem, 1.4vw, 1.4rem);
+}
+
+.page-shell {
+  width: min(1480px, 100%);
+  margin: 0 auto;
+  padding: 28px;
+}
+
+.page-topbar {
+  grid-template-columns: 1fr auto;
+}
+
+.page-heading,
+.aircraft-profile,
+.settings-panel,
+.table-panel {
+  margin-top: 18px;
+}
+
+.page-heading h1,
+.aircraft-profile h1 {
+  font-size: clamp(2.6rem, 6vw, 6rem);
+  line-height: 1;
+}
+
+.aircraft-profile {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+  align-items: end;
+  gap: 18px;
+  padding: 24px;
+}
+
+.aircraft-profile p {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+
+.profile-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.table-panel {
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+}
+
+th,
+td {
+  padding: 15px 16px;
+  border-bottom: 1px solid rgba(135, 230, 255, 0.12);
+  text-align: left;
+}
+
+th {
+  color: var(--cyan);
+  text-transform: uppercase;
+  letter-spacing: 0;
+  font-size: 0.85rem;
+}
+
+td {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+td a {
+  color: var(--green);
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.settings-panel {
+  padding: 22px;
+}
+
+dl {
+  margin: 14px 0 0;
+}
+
+dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+dd {
+  margin: 4px 0 15px;
+  overflow-wrap: anywhere;
+}
+
+.actions-panel {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+button {
+  min-height: 52px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: rgba(110, 231, 255, 0.08);
+  color: var(--text);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--green);
+}
+
+@media (max-width: 1100px) {
+  .screen-shell {
+    padding: 16px;
+  }
+
+  .topbar,
+  .live-grid,
+  .reveal-main,
+  .aircraft-profile,
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .live-grid {
+    height: auto;
+  }
+
+  .side-stack {
+    grid-template-rows: none;
+  }
+
+  .stat-grid,
+  .reveal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .status-strip,
+  .nav-actions,
+  .radar-footer,
+  .teaser-row,
+  .reveal-footer {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .stat-grid,
+  .profile-stats,
+  .reveal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reveal-data.wide {
+    grid-column: auto;
+  }
+}

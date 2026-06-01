@@ -1,0 +1,24 @@
+home_lat: 41.532234372609935
+home_lon: -87.95636647743676
+home_name: "Gazebo"
+dashboard_title: "SkyLedger"
+
+adsb_json_path: "/run/readsb/aircraft.json"
+database_path: "skyledger.db"
+dashboard_port: 8000
+tar1090_url: "http://localhost/tar1090/"
+
+alert_radius_miles: 0.5
+guess_trigger_radius_miles: 1.2
+reveal_radius_miles: 0.5
+tracking_radius_miles: 3.0
+max_alert_altitude_ft: 10000
+countdown_seconds: 10
+reveal_duration_seconds: 25
+alert_cooldown_minutes: 10
+raw_position_retention_days: 14
+poll_interval_seconds: 2.0
+
+enable_discord_alerts: false
+discord_webhook_url: ""
+enable_enrichment: false

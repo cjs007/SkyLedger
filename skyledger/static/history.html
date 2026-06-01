@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SkyLedger History</title>
+    <link rel="stylesheet" href="/assets/app.css">
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="topbar page-topbar">
+        <a class="brand" href="/">
+          <span class="brand-mark"></span>
+          <span>
+            <strong>SkyLedger</strong>
+            <small>Flyover History</small>
+          </span>
+        </a>
+        <nav class="nav-actions">
+          <a href="/">Dashboard</a>
+          <a href="/settings">Settings</a>
+        </nav>
+      </header>
+      <section class="page-heading">
+        <span class="eyebrow">Logged Events</span>
+        <h1>Flyover History</h1>
+      </section>
+      <section class="table-panel">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Callsign</th>
+              <th>Altitude</th>
+              <th>Distance</th>
+              <th>Speed</th>
+              <th>Aircraft</th>
+              <th>Flags</th>
+            </tr>
+          </thead>
+          <tbody id="historyRows"></tbody>
+        </table>
+      </section>
+    </main>
+    <script src="/assets/history.js"></script>
+  </body>
+</html>
