@@ -27,6 +27,7 @@ const els = {
   statLowestFlyover: document.querySelector("#statLowestFlyover"),
   statMaxDistance: document.querySelector("#statMaxDistance"),
   closestCallsign: document.querySelector("#closestCallsign"),
+  closestIdentifier: document.querySelector("#closestIdentifier"),
   closestAltitude: document.querySelector("#closestAltitude"),
   closestSpeed: document.querySelector("#closestSpeed"),
   closestHeading: document.querySelector("#closestHeading"),
@@ -71,7 +72,14 @@ function fmtHeading(value) {
 }
 
 function label(ac) {
-  return ac?.callsign || ac?.hex || "Unknown";
+  return ac?.callsign || ac?.registration || ac?.hex || "Unknown";
+}
+
+function identifierLabel(ac) {
+  const callsign = ac?.callsign;
+  const registration = ac?.registration;
+  if (callsign && registration) return `${callsign} / ${registration}`;
+  return callsign || registration || ac?.hex || "--";
 }
 
 function setMode(mode) {
@@ -125,6 +133,7 @@ function renderLive(payload, stats, summary, closest) {
   els.statLowestFlyover.textContent = fmtAltitude(summary.lowest_flyover_ft);
   els.statMaxDistance.textContent = fmtDistance(summary.max_distance_mi);
   els.closestCallsign.textContent = closest ? label(closest) : "No aircraft nearby";
+  els.closestIdentifier.textContent = closest ? identifierLabel(closest) : "--";
   els.closestAltitude.textContent = closest ? fmtAltitude(closest.altitude_ft) : "--";
   els.closestSpeed.textContent = closest ? fmtSpeed(closest.speed_kt) : "--";
   els.closestHeading.textContent = closest ? fmtHeading(closest.heading) : "--";

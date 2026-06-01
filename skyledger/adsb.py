@@ -16,6 +16,7 @@ class AircraftSnapshot:
     key: str
     hex: str
     callsign: str | None
+    registration: str | None
     lat: float | None
     lon: float | None
     altitude_ft: int | None
@@ -40,6 +41,7 @@ class AircraftSnapshot:
             "key": self.key,
             "hex": self.hex,
             "callsign": self.callsign,
+            "registration": self.registration,
             "lat": self.lat,
             "lon": self.lon,
             "altitude_ft": self.altitude_ft,
@@ -127,6 +129,7 @@ def normalize_aircraft(
 ) -> AircraftSnapshot | None:
     hex_value = _clean_hex(raw.get("hex"))
     callsign = _clean_callsign(raw.get("flight") or raw.get("callsign"))
+    registration = _clean(raw.get("r") or raw.get("registration") or raw.get("reg"))
     key = hex_value or callsign
     if not key:
         return None
@@ -154,6 +157,7 @@ def normalize_aircraft(
         key=key.lower(),
         hex=hex_value.lower() if hex_value else key.lower(),
         callsign=callsign,
+        registration=registration,
         lat=lat,
         lon=lon,
         altitude_ft=altitude,

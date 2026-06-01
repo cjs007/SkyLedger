@@ -21,6 +21,7 @@ class CoreTests(unittest.TestCase):
             {
                 "hex": "A1B2C3",
                 "flight": " SKY123 ",
+                "r": "N123AB",
                 "lat": 41.01,
                 "lon": -87.0,
                 "alt_baro": "4200",
@@ -37,6 +38,7 @@ class CoreTests(unittest.TestCase):
         assert snapshot is not None
         self.assertEqual(snapshot.hex, "a1b2c3")
         self.assertEqual(snapshot.callsign, "SKY123")
+        self.assertEqual(snapshot.registration, "N123AB")
         self.assertEqual(snapshot.altitude_ft, 4200)
         self.assertIsNotNone(snapshot.distance_mi)
 

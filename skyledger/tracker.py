@@ -221,6 +221,11 @@ class SkyLedgerTracker:
         today = self.db.get_today_stats()
         summary = self.db.get_summary_stats()
         closest = self.live_aircraft[0].to_dict() if self.live_aircraft else None
+        if closest:
+            record = self.db.get_aircraft_record(closest["hex"]) or {}
+            closest["registration"] = closest.get("registration") or record.get("registration")
+            closest["aircraft_type"] = record.get("aircraft_type")
+            closest["operator"] = record.get("operator")
         payload = {
             "mode": mode,
             "focus": focus,
@@ -330,6 +335,7 @@ class SkyLedgerTracker:
             key=f"test-{int(now)}",
             hex=f"test{int(now) % 10000:04d}",
             callsign="SKY123",
+            registration="N123SK",
             lat=self.config.home_lat,
             lon=self.config.home_lon,
             altitude_ft=3400,
