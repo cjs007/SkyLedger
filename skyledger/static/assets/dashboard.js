@@ -63,6 +63,12 @@ function fmtDistance(value) {
   return value === null || value === undefined ? "--" : `${Number(value).toFixed(2)} mi`;
 }
 
+function fmtShortDistance(value) {
+  const distance = Number(value);
+  if (!Number.isFinite(distance)) return null;
+  return `${distance.toFixed(distance < 1 ? 2 : 1)} mi`;
+}
+
 function fmtSpeed(value) {
   return value === null || value === undefined ? "--" : `${fmtNumber(value)} kt`;
 }
@@ -342,9 +348,27 @@ function drawAircraftMarker(ctx, x, y, ac) {
   ctx.restore();
 
   ctx.shadowBlur = 0;
-  ctx.fillStyle = "rgba(245, 248, 251, 0.92)";
-  ctx.font = "12px system-ui, sans-serif";
-  ctx.fillText(label(ac), x + 10, y - 10);
+  const nameText = label(ac);
+  const distanceText = fmtShortDistance(ac.distance_mi);
+  const labelX = x + 10;
+  const labelY = y - 12;
+
+  ctx.textBaseline = "top";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = "rgba(5, 7, 10, 0.9)";
+  ctx.lineWidth = 3;
+  ctx.font = "700 12px system-ui, sans-serif";
+  ctx.strokeText(nameText, labelX, labelY);
+  ctx.fillStyle = "rgba(245, 248, 251, 0.94)";
+  ctx.fillText(nameText, labelX, labelY);
+
+  if (distanceText) {
+    ctx.font = "700 10px system-ui, sans-serif";
+    ctx.strokeText(distanceText, labelX, labelY + 15);
+    ctx.fillStyle = "rgba(180, 204, 214, 0.92)";
+    ctx.fillText(distanceText, labelX, labelY + 15);
+  }
+  ctx.textBaseline = "alphabetic";
 }
 
 function mapRadiusPixels(miles, meta) {
