@@ -31,6 +31,7 @@ class AppConfig:
     reveal_duration_seconds: int = 25
     alert_cooldown_minutes: int = 10
     raw_position_retention_days: int = 14
+    live_aircraft_timeout_seconds: float = 10.0
     enable_discord_alerts: bool = False
     enable_enrichment: bool = False
     dashboard_title: str = "SkyLedger"

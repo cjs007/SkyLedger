@@ -78,17 +78,18 @@ class SkyLedgerTracker:
 
     async def tick(self) -> dict[str, Any]:
         snapshots = await self.reader.read()
+        fresh_snapshots = [snapshot for snapshot in snapshots if self._is_snapshot_fresh(snapshot)]
         self.last_poll_at = utc_now_iso()
         self.live_aircraft = sorted(
-            snapshots,
+            fresh_snapshots,
             key=lambda item: item.distance_mi if item.distance_mi is not None else 9999,
         )
         await asyncio.to_thread(
             self.db.record_raw_positions,
-            snapshots,
+            fresh_snapshots,
             self.config.raw_position_retention_days,
         )
-        await self._process_snapshots(snapshots)
+        await self._process_snapshots(fresh_snapshots)
         self._cleanup_active()
         payload = self.build_payload()
         self.last_payload = payload
@@ -146,16 +147,38 @@ class SkyLedgerTracker:
         for key, active in list(self.active.items()):
             if active.demo or key in seen_keys:
                 continue
-            if now - active.last_seen_monotonic > 20:
+            if self._active_age_seconds(active, now) > self.config.live_aircraft_timeout_seconds:
                 await self._finish_if_needed(active, event_type="closest_pass")
 
     def _cleanup_active(self) -> None:
         now = time.monotonic()
         for key, active in list(self.active.items()):
             reveal_done = active.reveal_until_monotonic is not None and now > active.reveal_until_monotonic
-            stale = now - active.last_seen_monotonic > 45
+            stale = (
+                not active.demo
+                and active.reveal_until_monotonic is None
+                and self._active_age_seconds(active, now) > self.config.live_aircraft_timeout_seconds
+            )
             if reveal_done or stale:
                 self.active.pop(key, None)
+
+    def _is_snapshot_fresh(self, snapshot: AircraftSnapshot) -> bool:
+        timeout = self.config.live_aircraft_timeout_seconds
+        if timeout <= 0:
+            return True
+
+        ages = [snapshot.seen_seconds]
+        if snapshot.has_position:
+            ages.append(snapshot.seen_position_seconds)
+
+        known_ages = [age for age in ages if age is not None]
+        if not known_ages:
+            return True
+        return max(known_ages) <= timeout
+
+    @staticmethod
+    def _active_age_seconds(active: ActiveFlyover, now: float) -> float:
+        return now - active.last_seen_monotonic
 
     async def _start_reveal(self, active: ActiveFlyover, now: float) -> None:
         active.reveal_started_monotonic = now
@@ -345,6 +368,7 @@ class SkyLedgerTracker:
             category="A3",
             distance_mi=0.8,
             seen_seconds=0,
+            seen_position_seconds=0,
             received_at=utc_now_iso(),
         )
         active = ActiveFlyover(

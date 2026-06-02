@@ -26,6 +26,7 @@ class AircraftSnapshot:
     category: str | None
     distance_mi: float | None
     seen_seconds: float | None
+    seen_position_seconds: float | None
     received_at: str
 
     @property
@@ -51,6 +52,7 @@ class AircraftSnapshot:
             "category": self.category,
             "distance_mi": self.distance_mi,
             "seen_seconds": self.seen_seconds,
+            "seen_position_seconds": self.seen_position_seconds,
             "is_helicopter": self.is_helicopter,
             "received_at": self.received_at,
         }
@@ -143,15 +145,11 @@ def normalize_aircraft(
         lat = None
         lon = None
 
-    altitude = _altitude(raw.get("alt_baro"))
-    if altitude is None:
-        altitude = _altitude(raw.get("alt_geom"))
+    altitude = _altitude(_first_present(raw, "alt_baro", "alt_geom", "altitude", "alt"))
 
-    speed = _int(_first_present(raw, "gs", "ias", "tas"))
+    speed = _int(_first_present(raw, "gs", "ias", "tas", "speed"))
     heading = _float(_first_present(raw, "track", "mag_heading", "true_heading"))
-    vertical_rate = _int(raw.get("baro_rate"))
-    if vertical_rate is None:
-        vertical_rate = _int(raw.get("geom_rate"))
+    vertical_rate = _int(_first_present(raw, "baro_rate", "geom_rate", "vert_rate"))
 
     return AircraftSnapshot(
         key=key.lower(),
@@ -167,6 +165,7 @@ def normalize_aircraft(
         category=_clean(raw.get("category")),
         distance_mi=distance,
         seen_seconds=_float(raw.get("seen")),
+        seen_position_seconds=_float(raw.get("seen_pos")),
         received_at=received_at,
     )
 

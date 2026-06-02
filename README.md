@@ -101,6 +101,34 @@ python -m skyledger --config config.yaml
 
 For a local test countdown, open [http://localhost:8000/settings](http://localhost:8000/settings) and press `Test Countdown`.
 
+## Windows SDR Development
+
+For Windows testing, SkyLedger uses Gvanem Dump1090 as a local decoder. The SDR must use the WinUSB driver first. In Device Manager, the NooElec dongle should show `SMArt XTR v5` with status `OK`.
+
+Start the receiver in one PowerShell window:
+
+```powershell
+.\scripts\start-windows-receiver.ps1
+```
+
+The first run clones [Gvanem Dump1090](https://github.com/gvanem/Dump1090) into `%LOCALAPPDATA%\SkyLedger\Dump1090`, downloads/builds its aircraft database, then starts decoding from the RTL-SDR. Leave this process running.
+
+Confirm the decoder is serving JSON:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8080/data/aircraft.json
+```
+
+Start SkyLedger in a second PowerShell window:
+
+```powershell
+.\scripts\start-windows-skyledger.ps1
+```
+
+This uses `config.windows.yaml`, which points `adsb_json_path` at `http://127.0.0.1:8080/data/aircraft.json` and writes to `skyledger.windows.db`. Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
+
+If Dump1090 shows `messages` increasing but `aircraft` is empty, the SDR is working but no complete position has been decoded yet. Give it more time, improve antenna placement, or adjust gain. The XTR model may be weak for ADS-B at 1090 MHz.
+
 ## Configuration
 
 Use `config.example.yaml` as the reference. Important fields:
@@ -114,6 +142,7 @@ Use `config.example.yaml` as the reference. Important fields:
 - `countdown_seconds`: Guess countdown duration.
 - `reveal_duration_seconds`: Reveal screen duration.
 - `raw_position_retention_days`: Retention for raw position samples.
+- `live_aircraft_timeout_seconds`: Hide aircraft whose latest message or position is older than this many seconds. Set to `0` to disable stale filtering.
 - `enable_discord_alerts`, `discord_webhook_url`: Optional Discord notifications.
 - `enable_enrichment`: Reserved for cache-first free/public enrichment.
 - `map_zoom_level`: Dashboard map zoom, also adjustable from `/settings`.

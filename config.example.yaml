@@ -17,6 +17,7 @@ countdown_seconds: 10
 reveal_duration_seconds: 25
 alert_cooldown_minutes: 10
 raw_position_retention_days: 14
+live_aircraft_timeout_seconds: 10.0
 poll_interval_seconds: 1.0
 map_zoom_level: 13
 map_tile_url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png"

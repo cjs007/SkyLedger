@@ -1,13 +1,28 @@
 from __future__ import annotations
 
+import asyncio
 import tempfile
 import unittest
 from pathlib import Path
 
-from skyledger.adsb import normalize_aircraft
-from skyledger.config import update_config_file
+from skyledger.adsb import SourceStatus, normalize_aircraft
+from skyledger.config import AppConfig, update_config_file
 from skyledger.db import Database
+from skyledger.discord import DiscordNotifier
 from skyledger.geo import haversine_miles
+from skyledger.tracker import SkyLedgerTracker
+
+
+class FakeReader:
+    def __init__(self, snapshots):
+        self.snapshots = snapshots
+        self.status = SourceStatus(source="fake")
+
+    async def read(self):
+        self.status.receiver_online = True
+        self.status.raw_aircraft_count = len(self.snapshots)
+        self.status.normalized_aircraft_count = len(self.snapshots)
+        return self.snapshots
 
 
 class CoreTests(unittest.TestCase):
@@ -61,6 +76,66 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(snapshot.altitude_ft, 0)
         self.assertEqual(snapshot.speed_kt, 0)
         self.assertEqual(snapshot.heading, 0)
+
+    def test_normalize_dump1090_windows_fields(self) -> None:
+        snapshot = normalize_aircraft(
+            {
+                "hex": "AC5066",
+                "flight": "SWA3688",
+                "lat": 41.429398,
+                "lon": -88.021525,
+                "altitude": 15625,
+                "speed": 415,
+                "track": 195,
+                "vert_rate": 2432,
+            },
+            41.532234372609935,
+            -87.95636647743676,
+            "2026-06-01T12:00:00Z",
+        )
+        self.assertIsNotNone(snapshot)
+        assert snapshot is not None
+        self.assertEqual(snapshot.altitude_ft, 15625)
+        self.assertEqual(snapshot.speed_kt, 415)
+        self.assertEqual(snapshot.heading, 195)
+        self.assertEqual(snapshot.vertical_rate_fpm, 2432)
+
+    def test_tracker_filters_stale_live_aircraft(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Database(str(Path(tmp) / "skyledger.db"))
+            db.init()
+            fresh = normalize_aircraft(
+                {"hex": "ABC001", "lat": 41.001, "lon": -87.0, "seen": 1, "seen_pos": 1},
+                41.0,
+                -87.0,
+                "2026-06-01T12:00:00Z",
+            )
+            stale_message = normalize_aircraft(
+                {"hex": "ABC002", "lat": 41.002, "lon": -87.0, "seen": 11, "seen_pos": 1},
+                41.0,
+                -87.0,
+                "2026-06-01T12:00:00Z",
+            )
+            stale_position = normalize_aircraft(
+                {"hex": "ABC003", "lat": 41.003, "lon": -87.0, "seen": 1, "seen_pos": 11},
+                41.0,
+                -87.0,
+                "2026-06-01T12:00:00Z",
+            )
+            assert fresh is not None
+            assert stale_message is not None
+            assert stale_position is not None
+
+            tracker = SkyLedgerTracker(
+                AppConfig(live_aircraft_timeout_seconds=10),
+                db,
+                FakeReader([fresh, stale_message, stale_position]),
+                DiscordNotifier("", False),
+            )
+
+            payload = asyncio.run(tracker.tick())
+
+            self.assertEqual([item["hex"] for item in payload["live_aircraft"]], ["abc001"])
 
     def test_record_flyover_updates_stats(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
