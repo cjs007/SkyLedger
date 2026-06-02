@@ -4,6 +4,7 @@ const state = {
   ws: null,
   mapKey: "",
   mapMeta: null,
+  receiverStarting: false,
 };
 
 const els = {
@@ -116,9 +117,7 @@ function render(payload) {
   els.dashboardTitle.textContent = config.dashboard_title || "SkyLedger";
   els.homeName.textContent = config.home_name || "Gazebo Flight Command Center";
 
-  const online = Boolean(status.receiver_online);
-  els.receiverStatus.textContent = online ? "Receiver online" : "Receiver offline";
-  els.receiverStatus.className = `status-pill ${online ? "online" : "offline"}`;
+  renderReceiverStatus(status);
   els.lastUpdate.textContent = status.last_poll_at ? `Updated ${new Date(status.last_poll_at).toLocaleTimeString()}` : "Waiting for data";
 
   setMode(payload.mode);
@@ -126,6 +125,16 @@ function render(payload) {
   renderMap(payload);
   if (payload.mode === "countdown") renderCountdown(payload.focus || {});
   if (payload.mode === "reveal") renderReveal(payload.focus || {});
+}
+
+function renderReceiverStatus(status = {}) {
+  const online = Boolean(status.receiver_online);
+  const starting = state.receiverStarting && !online;
+  els.receiverStatus.textContent = online ? "Receiver online" : starting ? "Starting receiver..." : "Receiver offline";
+  els.receiverStatus.className = `status-pill ${online ? "online" : "offline"}${starting ? " loading" : ""}`;
+  els.receiverStatus.disabled = online || starting;
+  els.receiverStatus.title = online ? "Receiver is online" : "Start the local receiver";
+  els.receiverStatus.setAttribute("aria-label", online ? "Receiver online" : "Receiver offline. Start local receiver.");
 }
 
 function renderLive(payload, stats, summary, closest) {
@@ -419,11 +428,49 @@ function connect() {
   state.ws.onerror = () => state.ws.close();
 }
 
+async function fetchLivePayload() {
+  const response = await fetch("/api/aircraft/live");
+  render(await response.json());
+}
+
+function delay(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function startReceiver() {
+  if (state.receiverStarting || Boolean(state.payload?.status?.receiver_online)) return;
+  state.receiverStarting = true;
+  renderReceiverStatus(state.payload?.status || {});
+  els.lastUpdate.textContent = "Starting receiver...";
+
+  try {
+    const response = await fetch("/api/receiver/start", { method: "POST" });
+    const result = await response.json();
+    if (!response.ok || !result.ok) {
+      throw new Error(result.error || "Receiver start failed");
+    }
+
+    els.lastUpdate.textContent = result.already_running ? "Receiver already running; refreshing" : "Receiver starting; waiting for data";
+    await delay(1500);
+    await fetchLivePayload();
+    if (!state.payload?.status?.receiver_online) {
+      await delay(3500);
+      await fetchLivePayload();
+    }
+  } catch (error) {
+    els.lastUpdate.textContent = error?.message || "Receiver start failed";
+  } finally {
+    state.receiverStarting = false;
+    renderReceiverStatus(state.payload?.status || {});
+  }
+}
+
 async function pollFallback() {
   if (!state.payload || !state.ws || state.ws.readyState !== WebSocket.OPEN) {
     try {
-      const response = await fetch("/api/aircraft/live");
-      render(await response.json());
+      await fetchLivePayload();
     } catch {
       // The status pill already shows stale/offline state.
     }
@@ -433,6 +480,7 @@ async function pollFallback() {
 
 updateClock();
 setInterval(updateClock, 1000);
+els.receiverStatus.addEventListener("click", startReceiver);
 window.addEventListener("resize", () => {
   state.mapKey = "";
   if (state.payload) renderMap(state.payload);

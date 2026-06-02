@@ -139,6 +139,20 @@ a {
   background: rgba(11, 17, 23, 0.7);
 }
 
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: auto;
+  white-space: nowrap;
+  font-weight: 800;
+  cursor: default;
+}
+
+button.status-pill:not(:disabled) {
+  cursor: pointer;
+}
+
 .status-pill.online {
   color: var(--green);
   border-color: rgba(97, 244, 168, 0.55);
@@ -147,6 +161,16 @@ a {
 .status-pill.offline {
   color: var(--red);
   border-color: rgba(255, 92, 122, 0.45);
+}
+
+.status-pill.offline:not(.loading):hover {
+  background: rgba(255, 92, 122, 0.1);
+  border-color: rgba(255, 92, 122, 0.75);
+}
+
+.status-pill.loading {
+  color: var(--amber);
+  border-color: rgba(255, 200, 87, 0.55);
 }
 
 .mode-panel {

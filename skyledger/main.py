@@ -13,6 +13,7 @@ from .adsb import ADSBReader
 from .config import load_config, update_config_file
 from .db import Database
 from .discord import DiscordNotifier
+from .receiver_control import start_windows_receiver
 from .tracker import SkyLedgerTracker
 
 PACKAGE_DIR = Path(__file__).resolve().parent
@@ -145,6 +146,10 @@ def create_app(config_path: str | None = None) -> FastAPI:
     @app.post("/api/test-countdown")
     async def api_test_countdown() -> dict[str, Any]:
         return await tracker.trigger_test_countdown()
+
+    @app.post("/api/receiver/start")
+    async def api_start_receiver() -> dict[str, Any]:
+        return await asyncio.to_thread(start_windows_receiver, config.adsb_json_path, PACKAGE_DIR.parent)
 
     @app.post("/api/history/clear")
     async def api_clear_history() -> dict[str, Any]:

@@ -4,12 +4,14 @@ import asyncio
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from skyledger.adsb import SourceStatus, normalize_aircraft
 from skyledger.config import AppConfig, update_config_file
 from skyledger.db import Database
 from skyledger.discord import DiscordNotifier
 from skyledger.geo import haversine_miles
+from skyledger.receiver_control import start_windows_receiver
 from skyledger.tracker import SkyLedgerTracker
 
 
@@ -230,6 +232,26 @@ class CoreTests(unittest.TestCase):
 
             self.assertEqual(config.map_zoom_level, 15)
             self.assertIn("map_zoom_level: 15", path.read_text(encoding="utf-8"))
+
+    def test_receiver_start_rejects_non_local_sources(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch("skyledger.receiver_control.platform.system", return_value="Windows"):
+                result = start_windows_receiver("http://192.168.1.50:8080/data/aircraft.json", Path(tmp))
+
+        self.assertFalse(result["ok"])
+        self.assertIn("local HTTP", result["error"])
+
+    def test_receiver_start_reports_already_running(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            with (
+                patch("skyledger.receiver_control.platform.system", return_value="Windows"),
+                patch("skyledger.receiver_control._is_port_open", return_value=True),
+            ):
+                result = start_windows_receiver("http://127.0.0.1:8080/data/aircraft.json", Path(tmp))
+
+        self.assertTrue(result["ok"])
+        self.assertTrue(result["already_running"])
+        self.assertEqual(result["port"], 8080)
 
 
 if __name__ == "__main__":
