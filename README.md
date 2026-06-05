@@ -205,6 +205,10 @@ API:
 - `POST /api/test-countdown`
 - `WS /ws/live`
 
+## License
+
+SkyLedger is available under the custom SkyLedger Non-Commercial License. It is free to use, modify, and share for non-commercial purposes. Commercial use requires a separate written commercial license from the copyright holder.
+
 ## Notes
 
 SkyLedger treats local ADS-B data as the source of truth. If the ADS-B JSON file is missing, malformed, or empty, the dashboard stays up and reports receiver status instead of crashing.
