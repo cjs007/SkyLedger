@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SkyLedger Raspberry Pi Setup Guide</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172026;
+      --muted: #5d6b75;
+      --paper: #f7f4ed;
+      --panel: #ffffff;
+      --line: #d8d2c7;
+      --accent: #27636f;
+      --accent-dark: #163f48;
+      --accent-soft: #e0eff1;
+      --warn: #8a4f09;
+      --warn-soft: #fff1d8;
+      --ok: #1f6a43;
+      --ok-soft: #e1f2e8;
+      --code: #101820;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font: 17px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    a {
+      color: var(--accent-dark);
+      font-weight: 700;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      align-self: start;
+      height: 100vh;
+      overflow: auto;
+      border-right: 1px solid var(--line);
+      background: #fffaf1;
+      padding: 24px 20px;
+    }
+
+    aside strong {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+
+    aside small {
+      color: var(--muted);
+      display: block;
+      margin-bottom: 18px;
+    }
+
+    nav a {
+      display: block;
+      color: var(--ink);
+      text-decoration: none;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+
+    nav a:hover {
+      background: var(--accent-soft);
+    }
+
+    main {
+      max-width: 1080px;
+      width: 100%;
+      padding: 40px 28px 72px;
+    }
+
+    header {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 30px;
+      margin-bottom: 22px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.15;
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 42px;
+      max-width: 780px;
+    }
+
+    h2 {
+      font-size: 28px;
+      margin-bottom: 14px;
+    }
+
+    h3 {
+      font-size: 21px;
+      margin: 22px 0 8px;
+    }
+
+    p {
+      margin: 12px 0;
+    }
+
+    .dek {
+      color: var(--muted);
+      font-size: 20px;
+      max-width: 800px;
+      margin-top: 16px;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .pill {
+      background: var(--accent-soft);
+      border: 1px solid #bdd8dc;
+      border-radius: 999px;
+      color: var(--accent-dark);
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 5px 12px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 26px;
+      margin: 18px 0;
+    }
+
+    .step-title {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .step-number {
+      display: inline-grid;
+      place-items: center;
+      flex: 0 0 36px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      font-weight: 800;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fffdf8;
+    }
+
+    .card h3 {
+      margin-top: 0;
+    }
+
+    ul,
+    ol {
+      padding-left: 24px;
+      margin: 12px 0;
+    }
+
+    li {
+      margin: 7px 0;
+    }
+
+    .callout {
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      padding: 14px 16px;
+      margin: 16px 0;
+      background: #f8fbfb;
+    }
+
+    .callout strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .callout.warning {
+      background: var(--warn-soft);
+      border-color: #e4c58e;
+      color: #533405;
+    }
+
+    .callout.success {
+      background: var(--ok-soft);
+      border-color: #b7dcc4;
+      color: #16492d;
+    }
+
+    .copy-wrap {
+      position: relative;
+      margin: 12px 0 16px;
+    }
+
+    pre {
+      background: var(--code);
+      border-radius: 8px;
+      color: #f2f7f6;
+      overflow-x: auto;
+      padding: 18px;
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.5;
+      white-space: pre;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.94em;
+    }
+
+    p code,
+    li code {
+      background: #eee7db;
+      border-radius: 5px;
+      padding: 2px 5px;
+    }
+
+    .copy-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      border: 1px solid #89a7ad;
+      border-radius: 6px;
+      background: #e8f4f6;
+      color: #113940;
+      cursor: pointer;
+      font-weight: 800;
+      min-height: 34px;
+      padding: 5px 10px;
+    }
+
+    .copy-button:focus-visible {
+      outline: 3px solid #9ccfd7;
+      outline-offset: 2px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 14px 0;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f0eadf;
+    }
+
+    .checklist label {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 8px 0;
+    }
+
+    .checklist input {
+      margin-top: 5px;
+      inline-size: 18px;
+      block-size: 18px;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        display: block;
+      }
+
+      aside {
+        position: static;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px;
+      }
+
+      main {
+        padding: 24px 16px 52px;
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background: white;
+      }
+
+      .layout {
+        display: block;
+      }
+
+      aside,
+      .copy-button {
+        display: none;
+      }
+
+      main {
+        max-width: none;
+        padding: 0;
+      }
+
+      section,
+      header {
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside>
+      <strong>SkyLedger Setup</strong>
+      <small>Plain-language Raspberry Pi guide</small>
+      <nav aria-label="Guide sections">
+        <a href="#overview">What You Are Building</a>
+        <a href="#shopping">Hardware And Requirements</a>
+        <a href="#before">Before You Start</a>
+        <a href="#flash">1. Prepare The Card</a>
+        <a href="#boot">2. Start The Pi</a>
+        <a href="#connect">3. Connect To The Pi</a>
+        <a href="#updates">4. Update The Pi</a>
+        <a href="#receiver">5. Install The Plane Receiver</a>
+        <a href="#receiver-check">6. Check The Receiver</a>
+        <a href="#skyledger">7. Install SkyLedger</a>
+        <a href="#config">8. Add Your Location</a>
+        <a href="#start">9. Start SkyLedger</a>
+        <a href="#kiosk">10. Make It Full Screen</a>
+        <a href="#final-check">Final Check</a>
+        <a href="#troubleshooting">Troubleshooting</a>
+      </nav>
+    </aside>
+
+    <main>
+      <header id="overview">
+        <h1>SkyLedger Raspberry Pi Setup Guide</h1>
+        <p class="dek">This guide walks you from a blank Raspberry Pi to a self-starting SkyLedger flight dashboard on a TV or monitor. It is written for someone who is comfortable following recipes, not someone who already knows Linux.</p>
+        <div class="meta">
+          <span class="pill">Estimated time: 60 to 120 minutes</span>
+          <span class="pill">No paid cloud account needed</span>
+          <span class="pill">Copy and paste friendly</span>
+        </div>
+      </header>
+
+      <section>
+        <h2>What You Are Building</h2>
+        <p>You are setting up a small computer, the Raspberry Pi, to listen for airplane signals with a USB radio receiver. SkyLedger reads those nearby airplane positions and shows them on a dashboard that can stay open on a TV.</p>
+        <div class="grid">
+          <div class="card">
+            <h3>When It Is Done</h3>
+            <ul>
+              <li>The Pi turns on by itself.</li>
+              <li>The airplane receiver starts by itself.</li>
+              <li>SkyLedger starts by itself.</li>
+              <li>The TV opens the SkyLedger dashboard full screen.</li>
+              <li>The Pi periodically checks that the receiver and dashboard are still running.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>How To Use This Page</h3>
+            <ul>
+              <li>Do the steps in order.</li>
+              <li>Copy commands exactly from the dark boxes.</li>
+              <li>Replace anything in angle brackets, like <code>&lt;your_latitude&gt;</code>, with your own value.</li>
+              <li>Stop at each green checkpoint before moving on.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="shopping">
+        <h2>Hardware And Requirements</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Required Hardware</h3>
+            <ul>
+              <li>Raspberry Pi 4 Model B.</li>
+              <li>Official-style USB-C power supply for the Pi.</li>
+              <li>32 GB or larger microSD card.</li>
+              <li>microSD card reader for your normal computer.</li>
+              <li>micro-HDMI to HDMI cable.</li>
+              <li>TV or monitor for the dashboard.</li>
+              <li>USB keyboard and mouse for first setup, even if you remove them later.</li>
+              <li>ADS-B USB receiver for 1090 MHz aircraft signals.</li>
+              <li>1090 MHz antenna.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Recommended Receiver</h3>
+            <p>Use an ADS-B-friendly RTL-SDR receiver. Good choices are usually based on an R820T or R820T2 tuner, such as a FlightAware Pro Stick, RTL-SDR Blog dongle, or standard NooElec NESDR SMArt.</p>
+            <p>The NooElec NESDR SMArt XTR may work, but it can be weak for ADS-B. If SkyLedger works but sees very few planes, the receiver or antenna placement is the first thing to suspect.</p>
+          </div>
+          <div class="card">
+            <h3>Network Requirements</h3>
+            <ul>
+              <li>Your Pi needs internet access during setup.</li>
+              <li>Ethernet is easiest and most reliable.</li>
+              <li>Wi-Fi also works if you enter the Wi-Fi name and password while preparing the card.</li>
+              <li>Your normal computer and Pi should be on the same home network.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Accounts And Downloads</h3>
+            <ul>
+              <li>Raspberry Pi Imager on your normal computer.</li>
+              <li>The SkyLedger GitHub repository must be public, or the Pi must have private access to it.</li>
+              <li>Your home latitude and longitude in decimal form, such as <code>41.000000</code> and <code>-87.000000</code>.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout warning">
+          <strong>Privacy note</strong>
+          Your latitude and longitude are your receiver location. Keep the real values out of screenshots, public examples, and public files.
+        </div>
+      </section>
+
+      <section id="before">
+        <h2>Before You Start</h2>
+        <div class="checklist">
+          <label><input type="checkbox"> I have the Raspberry Pi, power supply, microSD card, HDMI cable, display, keyboard, and mouse.</label>
+          <label><input type="checkbox"> I have the USB airplane receiver and antenna.</label>
+          <label><input type="checkbox"> I know whether the Pi will use Ethernet or Wi-Fi.</label>
+          <label><input type="checkbox"> I have copied my latitude and longitude somewhere private.</label>
+          <label><input type="checkbox"> The SkyLedger GitHub repository is ready for the Pi to download.</label>
+        </div>
+        <h3>Plain-English Word List</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Word</th>
+              <th>Meaning in this guide</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Pi</td>
+              <td>The Raspberry Pi 4.</td>
+            </tr>
+            <tr>
+              <td>Terminal</td>
+              <td>A text window where you paste setup commands.</td>
+            </tr>
+            <tr>
+              <td>Command</td>
+              <td>A line of text you paste into Terminal and run with Enter.</td>
+            </tr>
+            <tr>
+              <td>SSH</td>
+              <td>A way to control the Pi from your normal computer.</td>
+            </tr>
+            <tr>
+              <td>Kiosk mode</td>
+              <td>The dashboard opens full screen like a dedicated display.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="flash">
+        <div class="step-title">
+          <span class="step-number">1</span>
+          <div>
+            <h2>Prepare The microSD Card</h2>
+            <p>This puts Raspberry Pi OS on the card, sets the Pi name, turns on remote access, and saves your Wi-Fi details if needed.</p>
+          </div>
+        </div>
+        <ol>
+          <li>Install and open <a href="https://www.raspberrypi.com/software/" target="_blank" rel="noreferrer">Raspberry Pi Imager</a> on your normal computer.</li>
+          <li>Insert the microSD card into your normal computer.</li>
+          <li>In Raspberry Pi Imager, choose <strong>Raspberry Pi 4</strong> as the device.</li>
+          <li>Choose <strong>Raspberry Pi OS (64-bit) with Desktop</strong>. Do not choose Lite; the TV dashboard needs the desktop browser.</li>
+          <li>Choose your microSD card as the storage device.</li>
+          <li>Open the settings or customization screen before writing the card.</li>
+          <li>Set the hostname to <code>skyledger-pi</code>.</li>
+          <li>Set the username to <code>pi</code>.</li>
+          <li>Choose a strong password and write it somewhere safe.</li>
+          <li>If using Wi-Fi, enter your Wi-Fi name and password.</li>
+          <li>Set your country, timezone, and keyboard layout.</li>
+          <li>Turn on SSH.</li>
+          <li>Write the card. When it finishes, eject it safely.</li>
+        </ol>
+        <div class="callout success">
+          <strong>Checkpoint</strong>
+          You should have a finished microSD card with Raspberry Pi OS on it.
+        </div>
+      </section>
+
+      <section id="boot">
+        <div class="step-title">
+          <span class="step-number">2</span>
+          <div>
+            <h2>Start The Pi</h2>
+            <p>This is the physical setup: card, screen, network, receiver, antenna, then power.</p>
+          </div>
+        </div>
+        <ol>
+          <li>Put the microSD card into the Pi.</li>
+          <li>Connect the Pi to the TV or monitor with HDMI.</li>
+          <li>Connect the keyboard and mouse.</li>
+          <li>Connect Ethernet if you are using it.</li>
+          <li>Plug the ADS-B receiver into the Pi.</li>
+          <li>Attach the antenna to the receiver.</li>
+          <li>Place the antenna near a window or as high as practical.</li>
+          <li>Plug in the Pi power supply.</li>
+          <li>Wait for the desktop to appear. The first boot can take several minutes.</li>
+        </ol>
+        <div class="callout success">
+          <strong>Checkpoint</strong>
+          The Pi desktop is visible on the screen, or the Pi is online and reachable from your normal computer.
+        </div>
+      </section>
+
+      <section id="connect">
+        <div class="step-title">
+          <span class="step-number">3</span>
+          <div>
+            <h2>Connect To The Pi</h2>
+            <p>The easiest setup is to control the Pi from your normal computer. If that does not work, you can run the same commands in Terminal directly on the Pi.</p>
+          </div>
+        </div>
+        <h3>From Windows</h3>
+        <p>Open PowerShell from the Start menu and run this:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>ssh pi@skyledger-pi.local</code></pre>
+        </div>
+        <h3>From Mac</h3>
+        <p>Open Terminal and run this:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>ssh pi@skyledger-pi.local</code></pre>
+        </div>
+        <p>If it asks whether you trust the computer, type <code>yes</code> and press Enter. Then enter the Pi password you chose earlier. The password will not appear while you type; that is normal.</p>
+        <div class="callout warning">
+          <strong>If the name does not work</strong>
+          Find the Pi address in your router, then use <code>ssh pi@&lt;pi-ip-address&gt;</code>. Example: <code>ssh pi@192.168.1.42</code>.
+        </div>
+      </section>
+
+      <section id="updates">
+        <div class="step-title">
+          <span class="step-number">4</span>
+          <div>
+            <h2>Update The Pi</h2>
+            <p>This updates the Pi and installs the basic tools SkyLedger needs.</p>
+          </div>
+        </div>
+        <p>Paste this whole block into the Pi Terminal, then press Enter:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>sudo apt update
+sudo apt -y full-upgrade
+sudo apt install -y git python3-venv python3-pip rsync curl wget
+command -v chromium || command -v chromium-browser || sudo apt install -y chromium-browser
+sudo raspi-config nonint do_blanking 1
+sudo reboot</code></pre>
+        </div>
+        <p>The Pi will restart. Wait about two minutes, then reconnect:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>ssh pi@skyledger-pi.local</code></pre>
+        </div>
+        <div class="callout success">
+          <strong>Checkpoint</strong>
+          You are connected to the Pi again after the restart.
+        </div>
+      </section>
+
+      <section id="receiver">
+        <div class="step-title">
+          <span class="step-number">5</span>
+          <div>
+            <h2>Install The Plane Receiver Software</h2>
+            <p>SkyLedger does not talk directly to the USB receiver. Another program listens to the receiver and writes a small live aircraft file for SkyLedger to read.</p>
+          </div>
+        </div>
+        <p>Install the receiver program:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>sudo bash -c "$(wget -O - https://github.com/wiedehopf/adsb-scripts/raw/master/readsb-install.sh)"
+sudo reboot</code></pre>
+        </div>
+        <p>After the Pi restarts, reconnect:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>ssh pi@skyledger-pi.local</code></pre>
+        </div>
+        <p>Now tell the receiver where your antenna is. Replace the placeholders with your real decimal latitude and longitude:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>sudo readsb-set-location &lt;your_latitude&gt; &lt;your_longitude&gt;
+sudo readsb-gain auto</code></pre>
+        </div>
+        <p>Install the local airplane map:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>sudo bash -c "$(wget -nv -O - https://github.com/wiedehopf/tar1090/raw/master/install.sh)"</code></pre>
+        </div>
+        <div class="callout success">
+          <strong>Checkpoint</strong>
+          The receiver software and local airplane map are installed.
+        </div>
+      </section>
+
+      <section id="receiver-check">
+        <div class="step-title">
+          <span class="step-number">6</span>
+          <div>
+            <h2>Check The Receiver</h2>
+            <p>This confirms the Pi can see the aircraft receiver output before SkyLedger is installed.</p>
+          </div>
+        </div>
+        <p>Run these checks:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>systemctl status readsb --no-pager
+ls -l /run/readsb/aircraft.json
+curl http://127.0.0.1/tar1090/data/aircraft.json</code></pre>
+        </div>
+        <p>What you want to see:</p>
+        <ul>
+          <li>The first command should say <code>active</code> or <code>running</code>.</li>
+          <li>The second command should show a file named <code>aircraft.json</code>.</li>
+          <li>The third command should print a block of text with words like <code>now</code>, <code>messages</code>, or <code>aircraft</code>.</li>
+        </ul>
+        <p>From your normal computer, try opening this page:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>http://skyledger-pi.local/tar1090</code></pre>
+        </div>
+        <div class="callout warning">
+          <strong>If you see no planes yet</strong>
+          That can be normal indoors or during quiet air traffic. The important part is that the receiver service is running and the aircraft file exists.
+        </div>
+      </section>
+
+      <section id="skyledger">
+        <div class="step-title">
+          <span class="step-number">7</span>
+          <div>
+            <h2>Install SkyLedger</h2>
+            <p>This downloads SkyLedger, installs what it needs, and sets it up to run automatically.</p>
+          </div>
+        </div>
+        <p>Download SkyLedger from GitHub:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>cd ~
+git clone https://github.com/cjs007/SkyLedger.git
+cd ~/SkyLedger
+git checkout master
+chmod +x install.sh scripts/pi-healthcheck.sh scripts/skyledger-update.sh</code></pre>
+        </div>
+        <div class="callout warning">
+          <strong>If GitHub says the repository was not found</strong>
+          The repository is probably still private or the URL is different. Make the repository public first, or update the command to use the correct repository address.
+        </div>
+        <p>Install SkyLedger and its automatic background helpers:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>cd ~/SkyLedger
+INSTALL_SERVICE=1 INSTALL_HEALTHCHECK=1 INSTALL_UPDATE_SERVICE=1 ./install.sh</code></pre>
+        </div>
+        <p>This may take a few minutes. It is finished when the Terminal returns to a prompt where you can type again.</p>
+        <div class="callout success">
+          <strong>Checkpoint</strong>
+          SkyLedger is installed, and the automatic startup helpers are enabled.
+        </div>
+      </section>
+
+      <section id="config">
+        <div class="step-title">
+          <span class="step-number">8</span>
+          <div>
+            <h2>Add Your Location To SkyLedger</h2>
+            <p>SkyLedger needs your receiver location so it can show distances and decide what counts as a nearby aircraft.</p>
+          </div>
+        </div>
+        <p>Open the SkyLedger settings file:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>sudo nano /etc/skyledger/config.yaml</code></pre>
+        </div>
+        <p>In the editor, change or add these lines. Replace the latitude and longitude placeholders with your real values:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>home_lat: &lt;your_latitude&gt;
+home_lon: &lt;your_longitude&gt;
+home_name: "Home Base"
+dashboard_title: "SkyLedger"
+adsb_json_path: "/run/readsb/aircraft.json"
+database_path: "skyledger.db"
+dashboard_port: 8000
+tar1090_url: "http://localhost/tar1090/"
+tracking_radius_miles: 0.0</code></pre>
+        </div>
+        <h3>How To Save In Nano</h3>
+        <ol>
+          <li>Press <code>Ctrl</code> and <code>O</code> at the same time.</li>
+          <li>Press Enter to confirm the file name.</li>
+          <li>Press <code>Ctrl</code> and <code>X</code> at the same time to leave the editor.</li>
+        </ol>
+        <div class="callout success">
+          <strong>Checkpoint</strong>
+          Your real latitude and longitude are saved in <code>/etc/skyledger/config.yaml</code> on the Pi.
+        </div>
+      </section>
+
+      <section id="start">
+        <div class="step-title">
+          <span class="step-number">9</span>
+          <div>
+            <h2>Start SkyLedger</h2>
+            <p>This starts the dashboard and checks that it can talk to the receiver.</p>
+          </div>
+        </div>
+        <p>Run this:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>sudo systemctl start skyledger
+sudo systemctl status skyledger --no-pager
+curl http://127.0.0.1:8000/api/status</code></pre>
+        </div>
+        <p>What you want to see:</p>
+        <ul>
+          <li>The status command should say <code>active</code> or <code>running</code>.</li>
+          <li>The final command should print SkyLedger status text.</li>
+          <li>If the receiver is healthy, the status text should include <code>receiver_online</code> with a true value.</li>
+        </ul>
+        <p>From your normal computer, open:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>http://skyledger-pi.local:8000</code></pre>
+        </div>
+        <div class="callout success">
+          <strong>Checkpoint</strong>
+          The SkyLedger dashboard opens in a browser.
+        </div>
+      </section>
+
+      <section id="kiosk">
+        <div class="step-title">
+          <span class="step-number">10</span>
+          <div>
+            <h2>Make The Dashboard Open Full Screen</h2>
+            <p>This makes the Pi act like a dedicated TV dashboard after it turns on.</p>
+          </div>
+        </div>
+        <p>Create the startup file:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>mkdir -p ~/.config/labwc
+nano ~/.config/labwc/autostart</code></pre>
+        </div>
+        <p>Paste this one line into the file:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>sh -c 'chromium http://127.0.0.1:8000 --kiosk --noerrdialogs --disable-infobars --no-first-run --enable-features=OverlayScrollbar --start-maximized || chromium-browser http://127.0.0.1:8000 --kiosk --noerrdialogs --disable-infobars --no-first-run --enable-features=OverlayScrollbar --start-maximized' &amp;</code></pre>
+        </div>
+        <p>Save the file with <code>Ctrl</code> + <code>O</code>, Enter, then <code>Ctrl</code> + <code>X</code>.</p>
+        <p>Now turn on automatic desktop login:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>sudo raspi-config</code></pre>
+        </div>
+        <ol>
+          <li>Choose <strong>System Options</strong>.</li>
+          <li>Choose <strong>Boot / Auto Login</strong>.</li>
+          <li>Choose <strong>Desktop Autologin</strong>.</li>
+          <li>Exit the menu.</li>
+        </ol>
+        <p>Restart the Pi:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>sudo reboot</code></pre>
+        </div>
+        <div class="callout success">
+          <strong>Checkpoint</strong>
+          After the restart, the Pi should open SkyLedger full screen on the connected display.
+        </div>
+      </section>
+
+      <section id="final-check">
+        <h2>Final Check</h2>
+        <div class="checklist">
+          <label><input type="checkbox"> The Pi boots to the desktop without asking for a login.</label>
+          <label><input type="checkbox"> The SkyLedger dashboard opens full screen.</label>
+          <label><input type="checkbox"> The receiver status on SkyLedger is online or becomes online after a short wait.</label>
+          <label><input type="checkbox"> The antenna is near a window or outside with a clear view of the sky.</label>
+          <label><input type="checkbox"> The SkyLedger dashboard is also reachable from another computer at <code>http://skyledger-pi.local:8000</code>.</label>
+        </div>
+        <h3>Useful Pages</h3>
+        <ul>
+          <li>SkyLedger dashboard: <code>http://skyledger-pi.local:8000</code></li>
+          <li>Receiver map: <code>http://skyledger-pi.local/tar1090</code></li>
+          <li>SkyLedger settings page: <code>http://skyledger-pi.local:8000/settings</code></li>
+        </ul>
+      </section>
+
+      <section id="troubleshooting">
+        <h2>Troubleshooting</h2>
+        <h3>I cannot connect to <code>skyledger-pi.local</code></h3>
+        <ul>
+          <li>Make sure the Pi is powered on.</li>
+          <li>Make sure the Pi is on the same network as your computer.</li>
+          <li>Look for the Pi address in your router, then use <code>ssh pi@&lt;pi-ip-address&gt;</code>.</li>
+        </ul>
+
+        <h3>SkyLedger opens, but the receiver is offline</h3>
+        <p>Run this on the Pi:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>systemctl status readsb --no-pager
+ls -l /run/readsb/aircraft.json
+curl http://127.0.0.1:8000/api/status</code></pre>
+        </div>
+        <p>If the receiver file is missing, restart the receiver:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>sudo systemctl restart readsb</code></pre>
+        </div>
+
+        <h3>The dashboard works, but I see no planes</h3>
+        <ul>
+          <li>Move the antenna closer to a window or higher up.</li>
+          <li>Wait 10 to 20 minutes.</li>
+          <li>Open <code>http://skyledger-pi.local/tar1090</code> and see whether the receiver map sees anything.</li>
+          <li>If you are using an XTR receiver and results stay poor, try an ADS-B-friendly R820T or R820T2 receiver.</li>
+        </ul>
+
+        <h3>The full-screen browser opens before SkyLedger is ready</h3>
+        <ul>
+          <li>Wait a few seconds and refresh the page with <code>Ctrl</code> + <code>R</code>.</li>
+          <li>If it keeps happening, run <code>sudo systemctl status skyledger --no-pager</code> to check SkyLedger.</li>
+        </ul>
+
+        <h3>I want to manually update SkyLedger later</h3>
+        <p>If you push a new version to GitHub and want the Pi to update now, run:</p>
+        <div class="copy-wrap">
+          <pre data-copy><code>sudo systemctl start skyledger-update.service
+journalctl -u skyledger-update.service -n 100 --no-pager</code></pre>
+        </div>
+      </section>
+
+      <section>
+        <h2>When To Ask For Help</h2>
+        <p>Ask for help with the exact screen or command output if one of these happens:</p>
+        <ul>
+          <li>A command says <code>not found</code>.</li>
+          <li>A command says <code>permission denied</code>.</li>
+          <li>GitHub says the repository does not exist.</li>
+          <li>The receiver never creates <code>/run/readsb/aircraft.json</code>.</li>
+          <li>SkyLedger does not open at <code>http://skyledger-pi.local:8000</code>.</li>
+        </ul>
+        <p class="footer-note">This guide is a plain-language companion to the technical setup guide in <code>docs/raspberry-pi-setup.md</code>.</p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    document.querySelectorAll("pre[data-copy]").forEach((pre) => {
+      const wrapper = pre.parentElement;
+      const button = document.createElement("button");
+      button.className = "copy-button";
+      button.type = "button";
+      button.textContent = "Copy";
+      button.addEventListener("click", async () => {
+        const text = pre.innerText;
+        try {
+          await navigator.clipboard.writeText(text);
+          button.textContent = "Copied";
+          setTimeout(() => {
+            button.textContent = "Copy";
+          }, 1400);
+        } catch {
+          button.textContent = "Select text";
+        }
+      });
+      wrapper.appendChild(button);
+    });
+  </script>
+</body>
+</html>

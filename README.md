@@ -18,7 +18,10 @@ Core behavior does not require paid APIs or cloud services. Optional enrichment 
 
 ## Quick Start On Raspberry Pi
 
-For a full zero-to-kiosk Raspberry Pi 4 setup, including OS install, `readsb`,
+For a plain-language walkthrough meant for first-time setup, open
+[`docs/pi-setup-guide.html`](docs/pi-setup-guide.html) in a browser.
+
+For a full technical zero-to-kiosk Raspberry Pi 4 setup, including OS install, `readsb`,
 healthchecks, kiosk mode, and GitHub auto-updates, see
 [`docs/raspberry-pi-setup.md`](docs/raspberry-pi-setup.md).
 
