@@ -166,7 +166,7 @@ Set at least these values:
 ```yaml
 home_lat: <your_latitude>
 home_lon: <your_longitude>
-home_name: "Gazebo"
+home_name: "Home Base"
 dashboard_title: "SkyLedger"
 adsb_json_path: "/run/readsb/aircraft.json"
 database_path: "skyledger.db"

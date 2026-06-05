@@ -84,15 +84,15 @@ class CoreTests(unittest.TestCase):
             {
                 "hex": "AC5066",
                 "flight": "SWA3688",
-                "lat": 41.429398,
-                "lon": -88.021525,
+                "lat": 10.25,
+                "lon": 20.75,
                 "altitude": 15625,
                 "speed": 415,
                 "track": 195,
                 "vert_rate": 2432,
             },
-            41.532234372609935,
-            -87.95636647743676,
+            10.0,
+            20.0,
             "2026-06-01T12:00:00Z",
         )
         self.assertIsNotNone(snapshot)

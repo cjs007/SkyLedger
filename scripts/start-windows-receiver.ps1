@@ -10,7 +10,13 @@ $ErrorActionPreference = "Stop"
 
 $RepoUrl = "https://github.com/gvanem/Dump1090.git"
 $ProjectRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
-$AppConfigPath = Join-Path $ProjectRoot "config.yaml"
+$CandidateConfigPaths = @(
+    (Join-Path $ProjectRoot "config.windows.local.yaml"),
+    (Join-Path $ProjectRoot "config.local.yaml"),
+    (Join-Path $ProjectRoot "config.windows.yaml"),
+    (Join-Path $ProjectRoot "config.yaml")
+)
+$AppConfigPath = $CandidateConfigPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
 
 function Get-SimpleYamlValue {
     param(
@@ -70,7 +76,7 @@ Set-Content -Path $LocalConfig -Value $Content -Encoding ASCII
 
 Write-Host "Starting Dump1090 for SkyLedger Windows development"
 Write-Host "Install path: $InstallPath"
-Write-Host "Home: $HomeLat, $HomeLon"
+Write-Host "Home position: loaded from $(Split-Path $AppConfigPath -Leaf)"
 Write-Host "Gain: $Gain dB"
 Write-Host "Error correction: 1-bit=$ErrorCorrect1, 2-bit=$ErrorCorrect2"
 Write-Host "Aircraft JSON: http://127.0.0.1:$HttpPort/data/aircraft.json"

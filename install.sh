@@ -21,9 +21,22 @@ sudo rsync -a --delete \
   --exclude "venv" \
   --exclude "__pycache__" \
   --exclude ".pytest_cache" \
+  --exclude ".env" \
+  --exclude ".env.*" \
   --exclude "*.log" \
   --exclude "*.db" \
   --exclude "*.sqlite" \
+  --exclude "*.sqlite3" \
+  --exclude "*.pem" \
+  --exclude "*.key" \
+  --exclude "*.p12" \
+  --exclude "*.pfx" \
+  --exclude "*.bak" \
+  --exclude "*.backup" \
+  --exclude "*.dump" \
+  --exclude "config.local.yaml" \
+  --exclude "config.*.local.yaml" \
+  --exclude "*.private.yaml" \
   ./ "${APP_DIR}/"
 sudo chown -R "${APP_USER}:${APP_GROUP}" "${APP_DIR}"
 

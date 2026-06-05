@@ -115,7 +115,7 @@ function render(payload) {
 
   document.title = config.dashboard_title || "SkyLedger";
   els.dashboardTitle.textContent = config.dashboard_title || "SkyLedger";
-  els.homeName.textContent = config.home_name || "Gazebo Flight Command Center";
+  els.homeName.textContent = config.home_name || "SkyLedger Flight Command Center";
 
   renderReceiverStatus(status);
   els.lastUpdate.textContent = status.last_poll_at ? `Updated ${new Date(status.last_poll_at).toLocaleTimeString()}` : "Waiting for data";

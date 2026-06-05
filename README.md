@@ -48,9 +48,9 @@ sudo nano /etc/skyledger/config.yaml
 Set at least:
 
 ```yaml
-home_lat: 41.000000
-home_lon: -87.000000
-home_name: "Gazebo"
+home_lat: <your_latitude>
+home_lon: <your_longitude>
+home_name: "Home Base"
 adsb_json_path: "/run/readsb/aircraft.json"
 ```
 
@@ -100,7 +100,8 @@ If your Pi username is not `pi`, edit `/etc/systemd/system/skyledger.service` an
 python -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt
-python -m skyledger --config config.yaml
+cp config.example.yaml config.local.yaml
+python -m skyledger --config config.local.yaml
 ```
 
 For a local test countdown, open [http://localhost:8000/settings](http://localhost:8000/settings) and press `Test Countdown`.
@@ -112,6 +113,7 @@ For Windows testing, SkyLedger uses Gvanem Dump1090 as a local decoder. The SDR 
 Start the receiver in one PowerShell window:
 
 ```powershell
+Copy-Item config.windows.yaml config.windows.local.yaml
 .\scripts\start-windows-receiver.ps1
 ```
 
@@ -129,13 +131,13 @@ Start SkyLedger in a second PowerShell window:
 .\scripts\start-windows-skyledger.ps1
 ```
 
-This uses `config.windows.yaml`, which points `adsb_json_path` at `http://127.0.0.1:8080/data/aircraft.json` and writes to `skyledger.windows.db`. Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
+This uses `config.windows.local.yaml` when present, falling back to `config.windows.yaml`. The Windows config points `adsb_json_path` at `http://127.0.0.1:8080/data/aircraft.json` and writes to `skyledger.windows.db`. Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 If Dump1090 shows `messages` increasing but `aircraft` is empty, the SDR is working but no complete position has been decoded yet. Give it more time, improve antenna placement, or adjust gain. The XTR model may be weak for ADS-B at 1090 MHz.
 
 ## Configuration
 
-Use `config.example.yaml` as the reference. Important fields:
+Use `config.example.yaml` as the reference and keep real local values in `config.local.yaml`, `/etc/skyledger/config.yaml`, or another file passed with `--config`. Important fields:
 
 - `home_lat`, `home_lon`: Your antenna/home position.
 - `adsb_json_path`: File path or HTTP URL for `aircraft.json`.

@@ -9,6 +9,7 @@ import yaml
 
 
 DEFAULT_CONFIG_PATHS = (
+    "config.local.yaml",
     "config.yaml",
     "/etc/skyledger/config.yaml",
 )
