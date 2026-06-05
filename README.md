@@ -18,6 +18,10 @@ Core behavior does not require paid APIs or cloud services. Optional enrichment 
 
 ## Quick Start On Raspberry Pi
 
+For a full zero-to-kiosk Raspberry Pi 4 setup, including OS install, `readsb`,
+healthchecks, kiosk mode, and GitHub auto-updates, see
+[`docs/raspberry-pi-setup.md`](docs/raspberry-pi-setup.md).
+
 Install `readsb` and `tar1090` first, then verify one of these data sources exists:
 
 ```bash

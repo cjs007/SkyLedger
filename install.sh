@@ -4,6 +4,8 @@ set -euo pipefail
 APP_DIR="${SKYLEDGER_APP_DIR:-/opt/skyledger}"
 CONFIG_DIR="${SKYLEDGER_CONFIG_DIR:-/etc/skyledger}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
+APP_USER="${SKYLEDGER_USER:-${SUDO_USER:-${USER:-pi}}}"
+APP_GROUP="${SKYLEDGER_GROUP:-${APP_USER}}"
 
 echo "Installing SkyLedger to ${APP_DIR}"
 
@@ -18,8 +20,12 @@ sudo rsync -a --delete \
   --exclude ".venv" \
   --exclude "venv" \
   --exclude "__pycache__" \
+  --exclude ".pytest_cache" \
+  --exclude "*.log" \
+  --exclude "*.db" \
+  --exclude "*.sqlite" \
   ./ "${APP_DIR}/"
-sudo chown -R "${USER}:${USER}" "${APP_DIR}"
+sudo chown -R "${APP_USER}:${APP_GROUP}" "${APP_DIR}"
 
 cd "${APP_DIR}"
 "${PYTHON_BIN}" -m venv venv
@@ -47,6 +53,23 @@ if [ "${INSTALL_SERVICE:-0}" = "1" ]; then
   echo "Installed systemd service. Start it with: sudo systemctl start skyledger"
 else
   echo "Service not installed. Run with INSTALL_SERVICE=1 ./install.sh to install it."
+fi
+
+if [ "${INSTALL_HEALTHCHECK:-0}" = "1" ]; then
+  sudo cp skyledger-healthcheck.service /etc/systemd/system/skyledger-healthcheck.service
+  sudo cp skyledger-healthcheck.timer /etc/systemd/system/skyledger-healthcheck.timer
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now skyledger-healthcheck.timer
+  echo "Installed SkyLedger healthcheck timer."
+fi
+
+if [ "${INSTALL_UPDATE_SERVICE:-0}" = "1" ]; then
+  sudo cp skyledger-update.service /etc/systemd/system/skyledger-update.service
+  sudo cp skyledger-update.timer /etc/systemd/system/skyledger-update.timer
+  sudo systemctl daemon-reload
+  sudo systemctl enable skyledger-update.service
+  sudo systemctl enable --now skyledger-update.timer
+  echo "Installed SkyLedger Git update service and timer."
 fi
 
 cat <<EOF

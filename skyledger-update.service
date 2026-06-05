@@ -1,0 +1,16 @@
+[Unit]
+Description=Update SkyLedger from GitHub
+Wants=network-online.target
+After=network-online.target
+Before=skyledger.service
+ConditionPathIsDirectory=/home/pi/SkyLedger/.git
+
+[Service]
+Type=oneshot
+Environment=SKYLEDGER_REPO_DIR=/home/pi/SkyLedger
+Environment=SKYLEDGER_BRANCH=master
+Environment=SKYLEDGER_USER=pi
+ExecStart=/bin/bash /home/pi/SkyLedger/scripts/skyledger-update.sh
+
+[Install]
+WantedBy=multi-user.target

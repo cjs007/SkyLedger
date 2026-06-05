@@ -10,7 +10,7 @@ Group=pi
 WorkingDirectory=/opt/skyledger
 Environment=SKYLEDGER_CONFIG=/etc/skyledger/config.yaml
 ExecStart=/opt/skyledger/venv/bin/python -m skyledger --host 0.0.0.0
-Restart=on-failure
+Restart=always
 RestartSec=5
 
 [Install]
