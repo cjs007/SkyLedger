@@ -341,6 +341,8 @@ function drawMapRange(ctx, homeX, homeY, meta) {
 
 function drawAircraftMarker(ctx, x, y, ac) {
   const heading = Number(ac.heading || 0) * (Math.PI / 180);
+  const config = state.payload?.config || {};
+  const markerColor = aircraftMarkerColor(ac, config);
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(heading);
@@ -350,8 +352,8 @@ function drawAircraftMarker(ctx, x, y, ac) {
   ctx.lineTo(0, 4);
   ctx.lineTo(-7, 8);
   ctx.closePath();
-  ctx.fillStyle = ac.altitude_ft !== null && ac.altitude_ft <= 10000 ? "#61f4a8" : "#6ee7ff";
-  ctx.shadowColor = "rgba(97, 244, 168, 0.5)";
+  ctx.fillStyle = markerColor;
+  ctx.shadowColor = `${markerColor}80`;
   ctx.shadowBlur = 10;
   ctx.fill();
   ctx.restore();
@@ -378,6 +380,21 @@ function drawAircraftMarker(ctx, x, y, ac) {
     ctx.fillText(distanceText, labelX, labelY + 15);
   }
   ctx.textBaseline = "alphabetic";
+}
+
+function aircraftMarkerColor(ac, config) {
+  const altitude = ac.altitude_ft === null || ac.altitude_ft === undefined ? NaN : Number(ac.altitude_ft);
+  const threshold = Number(config.max_alert_altitude_ft ?? 10000);
+  const lowColor = validHexColor(config.aircraft_marker_low_color, "#61f4a8");
+  const defaultColor = validHexColor(config.aircraft_marker_default_color, "#6ee7ff");
+  if (Number.isFinite(altitude) && Number.isFinite(threshold) && altitude <= threshold) {
+    return lowColor;
+  }
+  return defaultColor;
+}
+
+function validHexColor(value, fallback) {
+  return /^#[0-9a-f]{6}$/i.test(String(value || "")) ? value : fallback;
 }
 
 function mapRadiusPixels(miles, meta) {

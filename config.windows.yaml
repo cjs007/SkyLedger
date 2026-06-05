@@ -1,6 +1,6 @@
-home_lat: 0.0
-home_lon: 0.0
-home_name: "Home Base"
+home_lat: 41.532234372609935
+home_lon: -87.95636647743676
+home_name: Gazebo
 dashboard_title: SkyLedger
 adsb_json_path: http://127.0.0.1:8080/data/aircraft.json
 database_path: skyledger.windows.db
@@ -22,3 +22,5 @@ map_tile_url: https://tile.openstreetmap.org/{z}/{x}/{y}.png
 enable_discord_alerts: false
 discord_webhook_url: ''
 enable_enrichment: false
+aircraft_marker_low_color: '#ff0000'
+aircraft_marker_default_color: '#af85ff'

@@ -130,6 +130,23 @@ a {
   font-weight: 700;
 }
 
+.update-tracker {
+  position: fixed;
+  right: clamp(14px, 2vw, 28px);
+  bottom: clamp(14px, 2vw, 28px);
+  z-index: 10;
+  max-width: min(420px, calc(100vw - 28px));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 13px;
+  background: rgba(5, 7, 10, 0.82);
+  color: var(--muted);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.32);
+  font-size: clamp(0.86rem, 1vw, 1rem);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
 .status-pill,
 .nav-actions a,
 .section-title a {
@@ -710,7 +727,9 @@ input[type="range"] {
   accent-color: var(--green);
 }
 
-input[type="number"] {
+input[type="number"],
+input[type="text"],
+input[type="color"] {
   width: 100%;
   min-height: 48px;
   border: 1px solid var(--line);
@@ -720,6 +739,28 @@ input[type="number"] {
   font: inherit;
   font-weight: 800;
   text-align: center;
+}
+
+input[type="color"] {
+  padding: 6px;
+  cursor: pointer;
+}
+
+input[type="text"] {
+  text-align: left;
+  padding: 0 14px;
+}
+
+.coordinate-fields,
+.color-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.coordinate-fields input,
+.color-field input {
+  margin-top: 6px;
 }
 
 .actions-panel {
@@ -790,7 +831,9 @@ button:hover {
 
   .stat-grid,
   .profile-stats,
-  .reveal-grid {
+  .reveal-grid,
+  .coordinate-fields,
+  .color-fields {
     grid-template-columns: 1fr;
   }
 

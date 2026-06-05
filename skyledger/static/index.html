@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>SkyLedger</title>
-    <link rel="stylesheet" href="/assets/app.css">
+    <link rel="stylesheet" href="/assets/app.css?v=dashboard-marker-colors-2">
   </head>
   <body class="dashboard-page">
     <main class="screen-shell">
@@ -20,7 +20,6 @@
         <section class="status-strip" aria-label="System status">
           <span id="clock" class="clock">--:--</span>
           <button id="receiverStatus" class="status-pill offline" type="button">Receiver offline</button>
-          <span id="lastUpdate">Waiting for data</span>
         </section>
         <nav class="nav-actions" aria-label="Dashboard pages">
           <a href="/history">History</a>
@@ -156,7 +155,8 @@
           <span id="revealTimer">Returning soon</span>
         </footer>
       </section>
+      <aside id="lastUpdate" class="update-tracker" aria-live="polite">Waiting for data</aside>
     </main>
-    <script src="/assets/dashboard.js"></script>
+    <script src="/assets/dashboard.js?v=dashboard-marker-colors-2"></script>
   </body>
 </html>

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,17 @@ STATIC_DIR = PACKAGE_DIR / "static"
 
 class MapZoomRequest(BaseModel):
     map_zoom_level: int = Field(ge=0, le=19)
+
+
+class HomeSettingsRequest(BaseModel):
+    home_name: str = Field(min_length=1, max_length=80)
+    home_lat: float = Field(ge=-90, le=90)
+    home_lon: float = Field(ge=-180, le=180)
+
+
+class AircraftMarkerColorsRequest(BaseModel):
+    aircraft_marker_low_color: str
+    aircraft_marker_default_color: str
 
 
 class ConnectionManager:
@@ -173,7 +185,68 @@ def create_app(config_path: str | None = None) -> FastAPI:
         await manager.broadcast(tracker.last_payload)
         return {"ok": True, "map_zoom_level": config.map_zoom_level}
 
+    @app.post("/api/settings/home")
+    async def api_update_home_settings(request: HomeSettingsRequest) -> dict[str, Any]:
+        home_name = request.home_name.strip()
+        if not home_name:
+            raise HTTPException(status_code=422, detail="Home name is required.")
+
+        updated = await asyncio.to_thread(
+            update_config_file,
+            config_path,
+            {
+                "home_name": home_name,
+                "home_lat": request.home_lat,
+                "home_lon": request.home_lon,
+            },
+        )
+        config.home_name = updated.home_name
+        config.home_lat = updated.home_lat
+        config.home_lon = updated.home_lon
+        reader.home_lat = updated.home_lat
+        reader.home_lon = updated.home_lon
+        tracker.last_payload = tracker.build_payload()
+        await manager.broadcast(tracker.last_payload)
+        return {
+            "ok": True,
+            "home_name": config.home_name,
+            "home_lat": config.home_lat,
+            "home_lon": config.home_lon,
+        }
+
+    @app.post("/api/settings/aircraft-marker-colors")
+    async def api_update_aircraft_marker_colors(request: AircraftMarkerColorsRequest) -> dict[str, Any]:
+        low_color = _normalize_hex_color(request.aircraft_marker_low_color, "low-altitude marker color")
+        default_color = _normalize_hex_color(
+            request.aircraft_marker_default_color,
+            "standard aircraft marker color",
+        )
+        updated = await asyncio.to_thread(
+            update_config_file,
+            config_path,
+            {
+                "aircraft_marker_low_color": low_color,
+                "aircraft_marker_default_color": default_color,
+            },
+        )
+        config.aircraft_marker_low_color = updated.aircraft_marker_low_color
+        config.aircraft_marker_default_color = updated.aircraft_marker_default_color
+        tracker.last_payload = tracker.build_payload()
+        await manager.broadcast(tracker.last_payload)
+        return {
+            "ok": True,
+            "aircraft_marker_low_color": config.aircraft_marker_low_color,
+            "aircraft_marker_default_color": config.aircraft_marker_default_color,
+        }
+
     return app
+
+
+def _normalize_hex_color(value: str, label: str) -> str:
+    color = value.strip().lower()
+    if not re.fullmatch(r"#[0-9a-f]{6}", color):
+        raise HTTPException(status_code=422, detail=f"Invalid {label}. Use #rrggbb.")
+    return color
 
 
 app = create_app()

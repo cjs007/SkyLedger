@@ -4,12 +4,35 @@ const testResult = document.querySelector("#testResult");
 const settingsResult = document.querySelector("#settingsResult");
 const mapZoomRange = document.querySelector("#mapZoomRange");
 const mapZoomNumber = document.querySelector("#mapZoomNumber");
+const homeNameInput = document.querySelector("#homeNameInput");
+const homeLatInput = document.querySelector("#homeLatInput");
+const homeLonInput = document.querySelector("#homeLonInput");
+const homeSettingsResult = document.querySelector("#homeSettingsResult");
+const lowMarkerColorInput = document.querySelector("#lowMarkerColorInput");
+const defaultMarkerColorInput = document.querySelector("#defaultMarkerColorInput");
+const markerColorsResult = document.querySelector("#markerColorsResult");
+let homeFormDirty = false;
+let markerColorsDirty = false;
 
 function rows(data) {
   return Object.entries(data).map(([key, value]) => `
-    <dt>${key.replaceAll("_", " ")}</dt>
-    <dd>${value === null || value === undefined || value === "" ? "--" : value}</dd>
+    <dt>${escapeHtml(key.replaceAll("_", " "))}</dt>
+    <dd>${escapeHtml(displayValue(value))}</dd>
   `).join("");
+}
+
+function displayValue(value) {
+  return value === null || value === undefined || value === "" ? "--" : String(value);
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;",
+  }[char]));
 }
 
 async function loadStatus() {
@@ -17,6 +40,8 @@ async function loadStatus() {
   const status = await response.json();
   const config = status.config || {};
   setMapZoom(config.map_zoom_level ?? 13);
+  if (!homeFormDirty) setHomeFields(config);
+  if (!markerColorsDirty) setMarkerColorFields(config);
   statusList.innerHTML = rows({
     receiver_online: status.receiver_online,
     source: status.source,
@@ -27,6 +52,30 @@ async function loadStatus() {
     database_path: status.database_path,
   });
   configList.innerHTML = rows(config);
+}
+
+function setHomeFields(config) {
+  homeNameInput.value = config.home_name ?? "";
+  homeLatInput.value = config.home_lat ?? "";
+  homeLonInput.value = config.home_lon ?? "";
+}
+
+function readCoordinate(input) {
+  const text = input.value.trim();
+  if (!text) return null;
+  const value = Number(text);
+  return Number.isFinite(value) ? value : null;
+}
+
+function setMarkerColorFields(config) {
+  lowMarkerColorInput.value = readHexColor(config.aircraft_marker_low_color, "#61f4a8");
+  defaultMarkerColorInput.value = readHexColor(config.aircraft_marker_default_color, "#6ee7ff");
+}
+
+function readHexColor(value, fallback = null) {
+  const color = String(value || "").trim().toLowerCase();
+  if (/^#[0-9a-f]{6}$/.test(color)) return color;
+  return fallback;
 }
 
 function setMapZoom(value) {
@@ -60,6 +109,72 @@ document.querySelector("#clearHistory").addEventListener("click", () => {
 });
 mapZoomRange.addEventListener("input", () => setMapZoom(mapZoomRange.value));
 mapZoomNumber.addEventListener("input", () => setMapZoom(mapZoomNumber.value));
+for (const input of [homeNameInput, homeLatInput, homeLonInput]) {
+  input.addEventListener("input", () => {
+    homeFormDirty = true;
+  });
+}
+for (const input of [lowMarkerColorInput, defaultMarkerColorInput]) {
+  input.addEventListener("input", () => {
+    markerColorsDirty = true;
+  });
+}
+document.querySelector("#saveHomeSettings").addEventListener("click", async () => {
+  homeSettingsResult.textContent = "Saving...";
+  const homeName = homeNameInput.value.trim();
+  const homeLat = readCoordinate(homeLatInput);
+  const homeLon = readCoordinate(homeLonInput);
+  if (!homeName || homeLat === null || homeLon === null) {
+    homeSettingsResult.textContent = "Home save failed";
+    return;
+  }
+  try {
+    const response = await fetch("/api/settings/home", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        home_name: homeName,
+        home_lat: homeLat,
+        home_lon: homeLon,
+      }),
+    });
+    const payload = await response.json();
+    if (!response.ok || payload.ok === false) throw new Error(payload.detail || "Save failed");
+    setHomeFields(payload);
+    homeFormDirty = false;
+    homeSettingsResult.textContent = "Home saved";
+    await loadStatus();
+  } catch (error) {
+    homeSettingsResult.textContent = "Home save failed";
+  }
+});
+document.querySelector("#saveMarkerColors").addEventListener("click", async () => {
+  markerColorsResult.textContent = "Saving...";
+  const lowColor = readHexColor(lowMarkerColorInput.value);
+  const defaultColor = readHexColor(defaultMarkerColorInput.value);
+  if (!lowColor || !defaultColor) {
+    markerColorsResult.textContent = "Marker color save failed";
+    return;
+  }
+  try {
+    const response = await fetch("/api/settings/aircraft-marker-colors", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        aircraft_marker_low_color: lowColor,
+        aircraft_marker_default_color: defaultColor,
+      }),
+    });
+    const payload = await response.json();
+    if (!response.ok || payload.ok === false) throw new Error(payload.detail || "Save failed");
+    setMarkerColorFields(payload);
+    markerColorsDirty = false;
+    markerColorsResult.textContent = "Marker colors saved";
+    await loadStatus();
+  } catch (error) {
+    markerColorsResult.textContent = "Marker color save failed";
+  }
+});
 document.querySelector("#saveMapZoom").addEventListener("click", async () => {
   settingsResult.textContent = "Saving...";
   try {

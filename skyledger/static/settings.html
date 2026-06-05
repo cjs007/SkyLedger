@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>SkyLedger Settings</title>
-    <link rel="stylesheet" href="/assets/app.css">
+    <link rel="stylesheet" href="/assets/app.css?v=marker-settings-1">
   </head>
   <body>
     <main class="page-shell">
@@ -31,6 +31,23 @@
           <dl id="configList"></dl>
         </article>
         <article class="settings-panel actions-panel">
+          <span class="eyebrow">Home</span>
+          <label class="field-label" for="homeNameInput">Home Name</label>
+          <input id="homeNameInput" type="text" maxlength="80" autocomplete="off" required>
+          <div class="coordinate-fields">
+            <label class="field-label" for="homeLatInput">
+              Latitude
+              <input id="homeLatInput" type="number" min="-90" max="90" step="0.000001" required>
+            </label>
+            <label class="field-label" for="homeLonInput">
+              Longitude
+              <input id="homeLonInput" type="number" min="-180" max="180" step="0.000001" required>
+            </label>
+          </div>
+          <button id="saveHomeSettings" type="button">Save Home</button>
+          <p id="homeSettingsResult"></p>
+        </article>
+        <article class="settings-panel actions-panel">
           <span class="eyebrow">Map</span>
           <label class="field-label" for="mapZoomRange">Map Zoom</label>
           <div class="zoom-control">
@@ -41,6 +58,21 @@
           <p id="settingsResult"></p>
         </article>
         <article class="settings-panel actions-panel">
+          <span class="eyebrow">Aircraft Markers</span>
+          <div class="color-fields">
+            <label class="field-label color-field" for="lowMarkerColorInput">
+              Low / alert altitude
+              <input id="lowMarkerColorInput" type="color">
+            </label>
+            <label class="field-label color-field" for="defaultMarkerColorInput">
+              Standard aircraft
+              <input id="defaultMarkerColorInput" type="color">
+            </label>
+          </div>
+          <button id="saveMarkerColors" type="button">Save Marker Colors</button>
+          <p id="markerColorsResult"></p>
+        </article>
+        <article class="settings-panel actions-panel">
           <span class="eyebrow">Tests</span>
           <button id="testCountdown" type="button">Test Countdown</button>
           <button id="testDiscord" type="button">Test Discord</button>
@@ -49,6 +81,6 @@
         </article>
       </section>
     </main>
-    <script src="/assets/settings.js"></script>
+    <script src="/assets/settings.js?v=marker-settings-1"></script>
   </body>
 </html>

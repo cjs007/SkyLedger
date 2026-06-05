@@ -265,6 +265,8 @@ class SkyLedgerTracker:
                 "max_alert_altitude_ft": self.config.max_alert_altitude_ft,
                 "map_zoom_level": self.config.map_zoom_level,
                 "map_tile_url": self.config.map_tile_url,
+                "aircraft_marker_low_color": self.config.aircraft_marker_low_color,
+                "aircraft_marker_default_color": self.config.aircraft_marker_default_color,
             },
             "live_aircraft": [item.to_dict() for item in self.live_aircraft[:40]],
             "closest_aircraft": closest,

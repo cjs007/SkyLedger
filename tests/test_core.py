@@ -11,6 +11,7 @@ from skyledger.config import AppConfig, update_config_file
 from skyledger.db import Database
 from skyledger.discord import DiscordNotifier
 from skyledger.geo import haversine_miles
+from skyledger.main import AircraftMarkerColorsRequest, HomeSettingsRequest, create_app
 from skyledger.receiver_control import start_windows_receiver
 from skyledger.tracker import SkyLedgerTracker
 
@@ -232,6 +233,119 @@ class CoreTests(unittest.TestCase):
 
             self.assertEqual(config.map_zoom_level, 15)
             self.assertIn("map_zoom_level: 15", path.read_text(encoding="utf-8"))
+
+    def test_update_config_file_persists_home_settings(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "config.yaml"
+            path.write_text("home_lat: 41.0\nhome_lon: -87.0\nhome_name: Old\n", encoding="utf-8")
+
+            config = update_config_file(
+                str(path),
+                {"home_name": "Hangar", "home_lat": 41.5, "home_lon": -87.5},
+            )
+
+            self.assertEqual(config.home_name, "Hangar")
+            self.assertEqual(config.home_lat, 41.5)
+            self.assertEqual(config.home_lon, -87.5)
+
+    def test_home_settings_endpoint_updates_runtime_config_and_reader(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            config_path = Path(tmp) / "config.yaml"
+            db_path = Path(tmp) / "skyledger.db"
+            aircraft_path = Path(tmp) / "aircraft.json"
+            config_path.write_text(
+                "\n".join(
+                    [
+                        "home_lat: 41.0",
+                        "home_lon: -87.0",
+                        "home_name: Old",
+                        f"database_path: '{db_path}'",
+                        f"adsb_json_path: '{aircraft_path}'",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            app = create_app(str(config_path))
+            app.state.db.init()
+            route = next(
+                route
+                for route in app.routes
+                if getattr(route, "path", None) == "/api/settings/home"
+            )
+
+            response = asyncio.run(
+                route.endpoint(HomeSettingsRequest(home_name="Hangar", home_lat=41.5, home_lon=-87.5))
+            )
+
+            self.assertEqual(
+                response,
+                {"ok": True, "home_name": "Hangar", "home_lat": 41.5, "home_lon": -87.5},
+            )
+            self.assertEqual(app.state.config.home_name, "Hangar")
+            self.assertEqual(app.state.config.home_lat, 41.5)
+            self.assertEqual(app.state.config.home_lon, -87.5)
+            self.assertEqual(app.state.tracker.reader.home_lat, 41.5)
+            self.assertEqual(app.state.tracker.reader.home_lon, -87.5)
+
+    def test_update_config_file_persists_aircraft_marker_colors(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "config.yaml"
+            path.write_text("home_lat: 41.0\nhome_lon: -87.0\n", encoding="utf-8")
+
+            config = update_config_file(
+                str(path),
+                {
+                    "aircraft_marker_low_color": "#ffcc00",
+                    "aircraft_marker_default_color": "#3366ff",
+                },
+            )
+
+            self.assertEqual(config.aircraft_marker_low_color, "#ffcc00")
+            self.assertEqual(config.aircraft_marker_default_color, "#3366ff")
+
+    def test_aircraft_marker_colors_endpoint_updates_runtime_config(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            config_path = Path(tmp) / "config.yaml"
+            db_path = Path(tmp) / "skyledger.db"
+            aircraft_path = Path(tmp) / "aircraft.json"
+            config_path.write_text(
+                "\n".join(
+                    [
+                        "home_lat: 41.0",
+                        "home_lon: -87.0",
+                        f"database_path: '{db_path}'",
+                        f"adsb_json_path: '{aircraft_path}'",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            app = create_app(str(config_path))
+            app.state.db.init()
+            route = next(
+                route
+                for route in app.routes
+                if getattr(route, "path", None) == "/api/settings/aircraft-marker-colors"
+            )
+
+            response = asyncio.run(
+                route.endpoint(
+                    AircraftMarkerColorsRequest(
+                        aircraft_marker_low_color="#FFCC00",
+                        aircraft_marker_default_color="#3366FF",
+                    )
+                )
+            )
+
+            self.assertEqual(
+                response,
+                {
+                    "ok": True,
+                    "aircraft_marker_low_color": "#ffcc00",
+                    "aircraft_marker_default_color": "#3366ff",
+                },
+            )
+            self.assertEqual(app.state.config.aircraft_marker_low_color, "#ffcc00")
+            self.assertEqual(app.state.config.aircraft_marker_default_color, "#3366ff")
 
     def test_receiver_start_rejects_non_local_sources(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

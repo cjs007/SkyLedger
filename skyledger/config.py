@@ -41,6 +41,8 @@ class AppConfig:
     poll_interval_seconds: float = 1.0
     map_zoom_level: int = 13
     map_tile_url: str = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+    aircraft_marker_low_color: str = "#61f4a8"
+    aircraft_marker_default_color: str = "#6ee7ff"
 
     def public_dict(self) -> dict[str, Any]:
         data = asdict(self)
