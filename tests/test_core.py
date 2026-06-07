@@ -140,6 +140,49 @@ class CoreTests(unittest.TestCase):
 
             self.assertEqual([item["hex"] for item in payload["live_aircraft"]], ["abc001"])
 
+    def test_tracker_payload_contains_sightings_data(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Database(str(Path(tmp) / "skyledger.db"))
+            db.init()
+            snapshot = normalize_aircraft(
+                {
+                    "hex": "ABC456",
+                    "flight": " N456AB ",
+                    "lat": 41.001,
+                    "lon": -87.0,
+                    "alt_baro": 2200,
+                    "gs": 120,
+                    "track": 180,
+                },
+                41.0,
+                -87.0,
+                "2026-06-01T12:00:00Z",
+            )
+            assert snapshot is not None
+
+            # Setup tracker
+            tracker = SkyLedgerTracker(
+                AppConfig(live_aircraft_timeout_seconds=10),
+                db,
+                FakeReader([snapshot]),
+                DiscordNotifier("", False),
+            )
+
+            # 1. Test payload before logging (0 sightings expected)
+            payload = asyncio.run(tracker.tick())
+            closest = payload["closest_aircraft"]
+            self.assertIsNotNone(closest)
+            self.assertEqual(closest["total_sightings"], 0)
+
+            # 2. Log a flyover to make sightings > 0
+            db.record_flyover(snapshot, "reveal", True, True)
+
+            # 3. Request payload again (1 sighting expected now)
+            payload = asyncio.run(tracker.tick())
+            closest = payload["closest_aircraft"]
+            self.assertIsNotNone(closest)
+            self.assertEqual(closest["total_sightings"], 1)
+
     def test_record_flyover_updates_stats(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             db = Database(str(Path(tmp) / "skyledger.db"))

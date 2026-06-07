@@ -249,6 +249,7 @@ class SkyLedgerTracker:
             closest["registration"] = closest.get("registration") or record.get("registration")
             closest["aircraft_type"] = record.get("aircraft_type")
             closest["operator"] = record.get("operator")
+            closest["total_sightings"] = record.get("total_sightings", 0)
         payload = {
             "mode": mode,
             "focus": focus,
