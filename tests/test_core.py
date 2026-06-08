@@ -410,6 +410,30 @@ class CoreTests(unittest.TestCase):
         self.assertTrue(result["already_running"])
         self.assertEqual(result["port"], 8080)
 
+    def test_update_config_file_rejects_unknown_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "config.yaml"
+            path.write_text("home_lat: 41.0\nhome_lon: -87.0\n", encoding="utf-8")
+
+            with self.assertRaises(ValueError) as context:
+                update_config_file(str(path), {"unknown_field": "value"})
+
+            self.assertIn("unknown_field", str(context.exception))
+
+    def test_update_config_file_rejects_multiple_unknown_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "config.yaml"
+            path.write_text("home_lat: 41.0\nhome_lon: -87.0\n", encoding="utf-8")
+
+            with self.assertRaises(ValueError) as context:
+                update_config_file(
+                    str(path),
+                    {"unknown_field1": "value1", "unknown_field2": "value2"},
+                )
+
+            self.assertIn("unknown_field1", str(context.exception))
+            self.assertIn("unknown_field2", str(context.exception))
+
 
 if __name__ == "__main__":
     unittest.main()
