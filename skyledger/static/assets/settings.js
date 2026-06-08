@@ -101,6 +101,19 @@ async function post(path) {
   }
 }
 
+async function readJson(response) {
+  try {
+    return await response.json();
+  } catch {
+    return {};
+  }
+}
+
+function saveFailureText(label, error) {
+  const message = error?.message && error.message !== "Save failed" ? `: ${error.message}` : "";
+  return `${label}${message}`;
+}
+
 document.querySelector("#testCountdown").addEventListener("click", () => post("/api/test-countdown"));
 document.querySelector("#testDiscord").addEventListener("click", () => post("/api/test-discord"));
 document.querySelector("#clearHistory").addEventListener("click", () => {
@@ -138,14 +151,14 @@ document.querySelector("#saveHomeSettings").addEventListener("click", async () =
         home_lon: homeLon,
       }),
     });
-    const payload = await response.json();
+    const payload = await readJson(response);
     if (!response.ok || payload.ok === false) throw new Error(payload.detail || "Save failed");
     setHomeFields(payload);
     homeFormDirty = false;
     homeSettingsResult.textContent = "Home saved";
     await loadStatus();
   } catch (error) {
-    homeSettingsResult.textContent = "Home save failed";
+    homeSettingsResult.textContent = saveFailureText("Home save failed", error);
   }
 });
 document.querySelector("#saveMarkerColors").addEventListener("click", async () => {
@@ -165,14 +178,14 @@ document.querySelector("#saveMarkerColors").addEventListener("click", async () =
         aircraft_marker_default_color: defaultColor,
       }),
     });
-    const payload = await response.json();
+    const payload = await readJson(response);
     if (!response.ok || payload.ok === false) throw new Error(payload.detail || "Save failed");
     setMarkerColorFields(payload);
     markerColorsDirty = false;
     markerColorsResult.textContent = "Marker colors saved";
     await loadStatus();
   } catch (error) {
-    markerColorsResult.textContent = "Marker color save failed";
+    markerColorsResult.textContent = saveFailureText("Marker color save failed", error);
   }
 });
 document.querySelector("#saveMapZoom").addEventListener("click", async () => {
@@ -183,13 +196,13 @@ document.querySelector("#saveMapZoom").addEventListener("click", async () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ map_zoom_level: Number(mapZoomNumber.value) }),
     });
-    const payload = await response.json();
+    const payload = await readJson(response);
     if (!response.ok || payload.ok === false) throw new Error(payload.detail || "Save failed");
     setMapZoom(payload.map_zoom_level);
     settingsResult.textContent = `Map zoom saved at ${payload.map_zoom_level}`;
     await loadStatus();
   } catch (error) {
-    settingsResult.textContent = "Map zoom save failed";
+    settingsResult.textContent = saveFailureText("Map zoom save failed", error);
   }
 });
 loadStatus();

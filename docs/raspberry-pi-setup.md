@@ -168,11 +168,21 @@ home_lat: <your_latitude>
 home_lon: <your_longitude>
 home_name: "Home Base"
 dashboard_title: "SkyLedger"
-adsb_json_path: "/run/readsb/aircraft.json"
+adsb_json_path: "http://127.0.0.1/tar1090/data/aircraft.json"
 database_path: "skyledger.db"
 dashboard_port: 8000
 tar1090_url: "http://localhost/tar1090/"
 tracking_radius_miles: 0.0
+```
+
+The tar1090 JSON endpoint is preferred here because it matches the receiver map you verify in the browser. If you intentionally want to read the file directly, use the populated readsb JSON path from your Pi instead.
+
+Allow the SkyLedger service user to save settings from the web UI:
+
+```bash
+sudo chown pi:pi /etc/skyledger /etc/skyledger/config.yaml
+sudo chmod 750 /etc/skyledger
+sudo chmod 640 /etc/skyledger/config.yaml
 ```
 
 Start SkyLedger:
@@ -218,7 +228,7 @@ systemctl is-active readsb
 curl http://127.0.0.1:8000/api/status
 ```
 
-`readsb` should come back automatically. SkyLedger may briefly show `receiver_online=false`, then flip back once `/run/readsb/aircraft.json` is readable again.
+`readsb` should come back automatically. SkyLedger may briefly show `receiver_online=false`, then flip back once the configured ADS-B JSON source is readable again.
 
 ## 7. GitHub Auto-Update Workflow
 
@@ -347,7 +357,7 @@ curl http://127.0.0.1:8000/api/status
 `receiver_online=false`:
 
 1. Check `readsb`: `systemctl status readsb --no-pager`
-2. Check raw JSON: `ls -l /run/readsb/aircraft.json`
+2. Check raw JSON: `curl http://127.0.0.1/tar1090/data/aircraft.json`
 3. Check SkyLedger status: `curl http://127.0.0.1:8000/api/status`
 4. Check logs: `journalctl -u readsb -n 100 --no-pager`
 

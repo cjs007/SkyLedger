@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .adsb import ADSBReader
-from .config import load_config, update_config_file
+from .config import AppConfig, load_config, update_config_file
 from .db import Database
 from .discord import DiscordNotifier
 from .receiver_control import start_windows_receiver
@@ -56,6 +56,21 @@ class ConnectionManager:
                 stale.append(websocket)
         for websocket in stale:
             self.disconnect(websocket)
+
+
+async def save_config(config_path: str | None, updates: dict[str, Any]) -> AppConfig:
+    try:
+        return await asyncio.to_thread(update_config_file, config_path, updates)
+    except PermissionError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Config file is not writable by SkyLedger: {exc}",
+        ) from exc
+    except OSError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not save config file: {exc}",
+        ) from exc
 
 
 def create_app(config_path: str | None = None) -> FastAPI:
@@ -175,11 +190,7 @@ def create_app(config_path: str | None = None) -> FastAPI:
 
     @app.post("/api/settings/map-zoom")
     async def api_update_map_zoom(request: MapZoomRequest) -> dict[str, Any]:
-        updated = await asyncio.to_thread(
-            update_config_file,
-            config_path,
-            {"map_zoom_level": request.map_zoom_level},
-        )
+        updated = await save_config(config_path, {"map_zoom_level": request.map_zoom_level})
         config.map_zoom_level = updated.map_zoom_level
         tracker.last_payload = tracker.build_payload()
         await manager.broadcast(tracker.last_payload)
@@ -191,8 +202,7 @@ def create_app(config_path: str | None = None) -> FastAPI:
         if not home_name:
             raise HTTPException(status_code=422, detail="Home name is required.")
 
-        updated = await asyncio.to_thread(
-            update_config_file,
+        updated = await save_config(
             config_path,
             {
                 "home_name": home_name,
@@ -221,8 +231,7 @@ def create_app(config_path: str | None = None) -> FastAPI:
             request.aircraft_marker_default_color,
             "standard aircraft marker color",
         )
-        updated = await asyncio.to_thread(
-            update_config_file,
+        updated = await save_config(
             config_path,
             {
                 "aircraft_marker_low_color": low_color,

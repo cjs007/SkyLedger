@@ -5,7 +5,7 @@ SKYLEDGER_URL="${SKYLEDGER_URL:-http://127.0.0.1:8000}"
 SKYLEDGER_SERVICE="${SKYLEDGER_SERVICE:-skyledger.service}"
 READSB_SERVICE="${READSB_SERVICE:-readsb.service}"
 ADSB_MAX_AGE_SECONDS="${ADSB_MAX_AGE_SECONDS:-30}"
-FALLBACK_ADSB_SOURCE="${ADSB_JSON_PATH:-/run/readsb/aircraft.json}"
+FALLBACK_ADSB_SOURCE="${ADSB_JSON_PATH:-http://127.0.0.1/tar1090/data/aircraft.json}"
 
 log() {
   printf '[%s] %s\n' "$(date -Is)" "$*"

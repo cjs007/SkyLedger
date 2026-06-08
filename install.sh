@@ -49,6 +49,9 @@ if [ ! -f "${CONFIG_DIR}/config.yaml" ]; then
   sudo cp config.example.yaml "${CONFIG_DIR}/config.yaml"
   echo "Created ${CONFIG_DIR}/config.yaml"
 fi
+sudo chown "${APP_USER}:${APP_GROUP}" "${CONFIG_DIR}" "${CONFIG_DIR}/config.yaml"
+sudo chmod 750 "${CONFIG_DIR}"
+sudo chmod 640 "${CONFIG_DIR}/config.yaml"
 
 SKYLEDGER_CONFIG="${CONFIG_DIR}/config.yaml" ./venv/bin/python - <<'PY'
 from skyledger.config import load_config

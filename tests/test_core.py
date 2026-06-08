@@ -6,6 +6,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from fastapi import HTTPException
+
 from skyledger.adsb import SourceStatus, normalize_aircraft
 from skyledger.config import AppConfig, update_config_file
 from skyledger.db import Database
@@ -286,6 +288,41 @@ class CoreTests(unittest.TestCase):
             self.assertEqual(app.state.config.home_lon, -87.5)
             self.assertEqual(app.state.tracker.reader.home_lat, 41.5)
             self.assertEqual(app.state.tracker.reader.home_lon, -87.5)
+
+    def test_home_settings_endpoint_reports_config_write_failures(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            config_path = Path(tmp) / "config.yaml"
+            db_path = Path(tmp) / "skyledger.db"
+            aircraft_path = Path(tmp) / "aircraft.json"
+            config_path.write_text(
+                "\n".join(
+                    [
+                        "home_lat: 41.0",
+                        "home_lon: -87.0",
+                        "home_name: Old",
+                        f"database_path: '{db_path}'",
+                        f"adsb_json_path: '{aircraft_path}'",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            app = create_app(str(config_path))
+            route = next(
+                route
+                for route in app.routes
+                if getattr(route, "path", None) == "/api/settings/home"
+            )
+
+            with patch("skyledger.main.update_config_file", side_effect=PermissionError("denied")):
+                with self.assertRaises(HTTPException) as raised:
+                    asyncio.run(
+                        route.endpoint(
+                            HomeSettingsRequest(home_name="Hangar", home_lat=41.5, home_lon=-87.5)
+                        )
+                    )
+
+            self.assertEqual(raised.exception.status_code, 500)
+            self.assertIn("not writable", raised.exception.detail)
 
     def test_update_config_file_persists_aircraft_marker_colors(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

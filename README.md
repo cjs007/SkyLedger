@@ -54,7 +54,7 @@ Set at least:
 home_lat: <your_latitude>
 home_lon: <your_longitude>
 home_name: "Home Base"
-adsb_json_path: "/run/readsb/aircraft.json"
+adsb_json_path: "http://127.0.0.1/tar1090/data/aircraft.json"
 ```
 
 Start manually:
