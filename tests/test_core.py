@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
@@ -433,6 +434,126 @@ class CoreTests(unittest.TestCase):
 
             self.assertIn("unknown_field1", str(context.exception))
             self.assertIn("unknown_field2", str(context.exception))
+
+    def test_execute_with_retry_retries_on_busy_and_database_locked_errors(self) -> None:
+        """Test that execute_with_retry retries on 'busy' and 'database is locked' errors."""
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Database(str(Path(tmp) / "skyledger.db"))
+            db.init()
+
+            call_count = 0
+
+            def fail_once_with_busy():
+                nonlocal call_count
+                call_count += 1
+                if call_count == 1:
+                    raise sqlite3.OperationalError("database is locked")
+                return "success"
+
+            result = db.execute_with_retry(fail_once_with_busy)
+            self.assertEqual(result, "success")
+            self.assertEqual(call_count, 2)
+
+            call_count = 0
+
+            def fail_once_with_busy2():
+                nonlocal call_count
+                call_count += 1
+                if call_count == 1:
+                    raise sqlite3.OperationalError("busy")
+                return "success"
+
+            result = db.execute_with_retry(fail_once_with_busy2)
+            self.assertEqual(result, "success")
+            self.assertEqual(call_count, 2)
+
+    def test_execute_with_retry_gives_up_after_max_attempts(self) -> None:
+        """Test that execute_with_retry gives up after max attempts."""
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Database(str(Path(tmp) / "skyledger.db"))
+            db.init()
+
+            def always_fail():
+                raise sqlite3.OperationalError("database is locked")
+
+            with self.assertRaises(sqlite3.OperationalError):
+                db.execute_with_retry(always_fail, attempts=3)
+
+    def test_checkpoint_wal(self) -> None:
+        """Test that checkpoint_wal executes the PRAGMA."""
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Database(str(Path(tmp) / "skyledger.db"))
+            db.init()
+
+            snapshot = normalize_aircraft(
+                {"hex": "ABC123", "lat": 41.001, "lon": -87.0, "alt_baro": 2200},
+                41.0,
+                -87.0,
+                "2026-06-01T12:00:00Z",
+            )
+            assert snapshot is not None
+            db.record_raw_positions([snapshot], retention_days=14)
+
+            # This should not raise
+            db.checkpoint_wal()
+
+            # Verify WAL was checkpointed (wal file should be truncated or removed)
+            wal_path = Path(tmp) / "skyledger.db-wal"
+            if wal_path.exists():
+                # WAL file exists but should be small after TRUNCATE checkpoint
+                self.assertLess(wal_path.stat().st_size, 1000)
+
+    def test_tracker_throttles_raw_positions_writes(self) -> None:
+        """Test that tracker only writes raw_positions every RAW_POSITIONS_WRITE_INTERVAL ticks."""
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Database(str(Path(tmp) / "skyledger.db"))
+            db.init()
+
+            snapshot = normalize_aircraft(
+                {"hex": "ABC123", "lat": 41.001, "lon": -87.0, "alt_baro": 2200, "seen": 1, "seen_pos": 1},
+                41.0,
+                -87.0,
+                "2026-06-01T12:00:00Z",
+            )
+            assert snapshot is not None
+
+            tracker = SkyLedgerTracker(
+                AppConfig(live_aircraft_timeout_seconds=10),
+                db,
+                FakeReader([snapshot]),
+                DiscordNotifier("", False),
+            )
+
+            # Run 4 ticks - should NOT write raw_positions (interval is 5)
+            for _ in range(4):
+                asyncio.run(tracker.tick())
+
+            # Check raw_positions count - should be 0
+            with db.connect() as conn:
+                count = conn.execute("SELECT COUNT(*) FROM raw_positions").fetchone()[0]
+            self.assertEqual(count, 0)
+
+            # Run 1 more tick (5th) - should write raw_positions
+            asyncio.run(tracker.tick())
+
+            with db.connect() as conn:
+                count = conn.execute("SELECT COUNT(*) FROM raw_positions").fetchone()[0]
+            self.assertEqual(count, 1)
+
+            # Run 4 more ticks - should not write again
+            for _ in range(4):
+                asyncio.run(tracker.tick())
+
+            with db.connect() as conn:
+                count = conn.execute("SELECT COUNT(*) FROM raw_positions").fetchone()[0]
+            self.assertEqual(count, 1)
+
+            # Run 1 more tick (10th) - should write again
+            asyncio.run(tracker.tick())
+
+            with db.connect() as conn:
+                count = conn.execute("SELECT COUNT(*) FROM raw_positions").fetchone()[0]
+            self.assertEqual(count, 2)
 
 
 if __name__ == "__main__":
